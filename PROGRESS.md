@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 9: Analytics and error tracking (next)
+- **Current stage:** 10: Full journey test, security review #2, README, launch checklist (in progress)
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,34 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 9: Analytics and error tracking ✅ (Oct 7). Live data waits for PostHog + Sentry keys
+
+**Done**
+- **PostHog, product events (server-side, `src/lib/analytics-server.ts`):**
+  - events: signed_up, person_added, gift_added, gift_status_changed, ideas_requested (with ok and plan), idea_saved, invite_created, family_joined, checkout_started, pass_activated, account_deleted;
+  - sent after the response (never slows a page), keyed by the random account id only, with no names, emails or typed text.
+- **PostHog, page views (browser, `src/lib/analytics.ts`):**
+  - cookieless mode: no cookies, local or session storage, so no cookie banner is needed;
+  - no autocapture, no session recordings, no extra scripts, and query strings and invite tokens are stripped from URLs;
+  - loads only after the page is idle.
+  - **Owner step:** turn on "Cookieless server hash mode" in the PostHog project settings, or browser page views are dropped.
+- **Sentry:**
+  - server errors via `src/instrumentation.ts` (`onRequestError`) and browser errors via `src/instrumentation-client.ts`;
+  - every report is scrubbed (`src/lib/sentry-scrub.ts`): no cookies, headers, request bodies, query strings or invite tokens; the user is reduced to their id;
+  - no performance tracing (stays within the free tier);
+  - source-map upload is off (it needs a Sentry auth token; optional later).
+- Each service does nothing until its key is set (`NEXT_PUBLIC_POSTHOG_KEY`/`_HOST`, `SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_DSN`).
+
+**Checks**
+- Unit test: the error-report scrubbing.
+- Browser tests, +2 × 2 (`tests/e2e/analytics.spec.ts`, with a local PostHog stand-in):
+  - key steps are recorded by account id, the email, the person's name and gift titles never appear, and page views are path-only;
+  - no analytics cookies or browser storage.
+- Note: PostHog ignores automated browsers on purpose, so the test makes its browser look ordinary. Real visitors are unaffected.
+- Full suite: 157 unit and database tests and 100 browser tests passing.
 
 ---
 
@@ -444,6 +472,7 @@ A separate review agent that didn't write the code checked every §15 item. It t
 - **URL configuration:** Site URL = production URL; redirect URLs = production URL + `/**`.
 - **Database:** apply `supabase/migrations/*` in order (`supabase db push`).
 - **Anthropic Console:** set a monthly spend limit (e.g. $50).
+- **PostHog:** Project settings → turn on cookieless server hash mode.
 
 ## Known issues
 - **Real email not sent yet:** needs the Resend account, the API key and a verified sending domain (which needs the domain bought). Before launch, in the Supabase dashboard:
@@ -461,8 +490,9 @@ A separate review agent that didn't write the code checked every §15 item. It t
 - Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
 
 ## Next step
-Stage 9:
-- PostHog, cookieless and only when its key is set, tracking the key steps: sign-up, first person, first idea, invite, upgrade;
-- Sentry error reporting, only when its DSN is set, with personal data scrubbed.
-
-Then Stage 10: the full journey test, security review #2, README and launch checklist.
+Stage 10:
+- the full journey test (sign up → person → AI ideas → save → invite → upgrade → reminder email);
+- security review #2 by a separate agent;
+- README in plain language;
+- the launch checklist;
+- `LAUNCH.md`.

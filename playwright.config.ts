@@ -4,6 +4,7 @@ import { defineConfig } from "@playwright/test";
 const PORT = Number(process.env.E2E_PORT ?? 3000);
 export const FAKE_AI_PORT = 4010;
 export const FAKE_EMAIL_PORT = 4011;
+export const FAKE_POSTHOG_PORT = 4012;
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -45,6 +46,11 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
+      command: `node tests/fake-posthog/server.mjs`,
+      url: `http://127.0.0.1:${FAKE_POSTHOG_PORT}/events`,
+      reuseExistingServer: false,
+    },
+    {
       command: `npm run build && npx next start -p ${PORT}`,
       url: `http://localhost:${PORT}`,
       reuseExistingServer: false,
@@ -62,6 +68,9 @@ export default defineConfig({
         EMAIL_FROM: "GiftLedger <hello@giftledger.test>",
         CRON_SECRET: "test-cron-secret-0123456789",
         UNSUBSCRIBE_SECRET: "test-unsubscribe-secret-0123456789",
+        // Analytics go to a local stand-in that records them.
+        NEXT_PUBLIC_POSTHOG_KEY: "phc_test_not_real",
+        NEXT_PUBLIC_POSTHOG_HOST: `http://127.0.0.1:${FAKE_POSTHOG_PORT}`,
         NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}`,
       },
     },

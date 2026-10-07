@@ -10,6 +10,7 @@ import { newInviteToken } from "@/lib/invite-token";
 import { FREE_MEMBER_LIMIT } from "@/lib/types";
 import { emailConfigured, sendEmail } from "@/lib/email/send";
 import { inviteEmail } from "@/lib/email/templates";
+import { trackServer } from "@/lib/analytics-server";
 
 const uuid = z.uuid();
 
@@ -38,6 +39,7 @@ export async function createInviteLink(): Promise<InviteResult> {
     };
   }
   revalidatePath("/app/family");
+  trackServer(ctx.userId, "invite_created", { plan: ctx.hasPass ? "pass" : "free" });
   return { ok: true, url: `${env.NEXT_PUBLIC_APP_URL}/join/${token}` };
 }
 

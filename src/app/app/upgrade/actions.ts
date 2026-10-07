@@ -7,6 +7,7 @@ import { checkoutSessionParams } from "@/lib/payments";
 import { hasActivePass, seasonOver } from "@/lib/season";
 import { serverEnv } from "@/lib/server-env";
 import { getStripe } from "@/lib/stripe";
+import { trackServer } from "@/lib/analytics-server";
 
 export async function startCheckout(): Promise<{ error: string } | void> {
   const ctx = await getListContext();
@@ -28,6 +29,7 @@ export async function startCheckout(): Promise<{ error: string } | void> {
     console.error("stripe_checkout_create_failed");
   }
   if (!url) return { error: "Couldn't open checkout. Please try again in a moment. You haven't been charged." };
+  trackServer(ctx.userId, "checkout_started");
   redirect(url);
 }
 

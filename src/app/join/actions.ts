@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail } from "@/lib/email/templates";
+import { trackServer } from "@/lib/analytics-server";
 
 export async function joinList(token: string, displayName?: string): Promise<{ error: string } | void> {
   const { supabase, userId, email } = await requireUser(`/join/${token}`);
@@ -28,6 +29,7 @@ export async function joinList(token: string, displayName?: string): Promise<{ e
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
   });
+  trackServer(userId, "family_joined");
   // The name family members see next to "Marked bought by…".
   const name = displayName?.trim().slice(0, 60);
   if (name) await supabase.from("profiles").update({ display_name: name }).eq("id", userId);

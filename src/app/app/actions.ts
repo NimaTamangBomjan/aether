@@ -10,6 +10,7 @@ import { FREE_RECIPIENT_LIMIT } from "@/lib/types";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail } from "@/lib/email/templates";
+import { trackServer } from "@/lib/analytics-server";
 import {
   budgetInput,
   fieldErrors,
@@ -73,6 +74,7 @@ export async function saveRecipient(_prev: FormState, formData: FormData): Promi
     return linkError(error.message);
   }
   refresh();
+  trackServer(ctx.userId, "person_added", { onboarding: formData.get("then") === "stay" });
   if (formData.get("then") === "stay") return { ok: true, id: data.id };
   redirect(`/app/people/${data.id}`);
 }
@@ -135,6 +137,7 @@ export async function addQuickGift(_prev: FormState, formData: FormData): Promis
   });
   if (error) return { error: TRY_AGAIN };
   refresh();
+  trackServer(ctx.userId, "gift_added", { with_price: parsed.data.price != null });
   return { ok: true };
 }
 
@@ -205,6 +208,7 @@ export async function setGiftStatus(id: string, status: string): Promise<FormSta
   const { error } = await ctx.supabase.rpc("set_gift_status", { p_gift: id, p_status: parsedStatus.data });
   if (error) return { error: "Couldn't update that gift. Please try again." };
   refresh();
+  trackServer(ctx.userId, "gift_status_changed", { status: parsedStatus.data });
   return { ok: true };
 }
 
@@ -239,6 +243,7 @@ export async function completeOnboarding(destination?: string): Promise<void> {
     .eq("id", ctx.userId)
     .is("onboarded_at", null)
     .select("id");
+  if (updated?.length) trackServer(ctx.userId, "signed_up", { via: "onboarding" });
   if (updated?.length && ctx.email) {
     await sendEmail(ctx.email, welcomeEmail({ name: ctx.profile.display_name, appUrl: env.NEXT_PUBLIC_APP_URL }), {
       tag: "welcome",

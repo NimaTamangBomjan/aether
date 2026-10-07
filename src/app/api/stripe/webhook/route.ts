@@ -6,6 +6,7 @@ import { passReceiptEmail } from "@/lib/email/templates";
 import { interpretEvent } from "@/lib/payments";
 import { serverEnv } from "@/lib/server-env";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { trackServer } from "@/lib/analytics-server";
 
 // Stripe tells us about payments here. This is the only thing that unlocks the Season Pass:
 // the signature proves the message is really from Stripe, and each event is applied once.
@@ -39,7 +40,10 @@ export async function POST(request: Request) {
       console.error(`stripe_webhook_failed event=${event.id} type=${event.type}`);
       return NextResponse.json({ error: "try again" }, { status: 500 }); // Stripe will retry
     }
-    if (applied) await sendThankYou(admin, action.userId, action.amount, event.id);
+    if (applied) {
+      trackServer(action.userId, "pass_activated");
+      await sendThankYou(admin, action.userId, action.amount, event.id);
+    }
   } else if (action.kind === "refunded") {
     const { error } = await admin.rpc("record_charge_refunded", {
       p_event_id: action.eventId,

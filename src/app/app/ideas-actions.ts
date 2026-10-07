@@ -8,6 +8,7 @@ import { spentCents } from "@/lib/budget";
 import { getListContext } from "@/lib/data/list";
 import { dollarsToCents } from "@/lib/money";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { trackServer } from "@/lib/analytics-server";
 
 export type IdeasUsage = { used: number; cap: number };
 
@@ -139,6 +140,7 @@ export async function requestIdeas(input: z.input<typeof requestSchema>): Promis
     p_output_tokens: result.outputTokens,
   });
   const usage = await getUsage(ctx);
+  trackServer(ctx.userId, "ideas_requested", { kind: req.kind, ok: result.ok, plan: ctx.hasPass ? "pass" : "free" });
   if (!result.ok) return { ok: false, code: "failed", message: FAILED, usage };
   return { ok: true, ideas: result.ideas, usage };
 }
@@ -178,5 +180,6 @@ export async function saveIdeaAsGift(input: z.input<typeof saveSchema>): Promise
   });
   if (error) return { ok: false, message: "Couldn't save that idea. Please try again." };
   revalidatePath("/app", "layout");
+  trackServer(ctx.userId, "idea_saved");
   return { ok: true };
 }

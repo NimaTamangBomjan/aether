@@ -8,6 +8,7 @@ import { ACTIVE_LIST_COOKIE, getListContext } from "@/lib/data/list";
 import { isValidTimeZone } from "@/lib/dates";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { FormState } from "@/app/app/actions";
+import { trackServer } from "@/lib/analytics-server";
 
 const settingsSchema = z.object({
   display_name: z.string().trim().min(1, "Add the name your family sees.").max(60, "Names can be up to 60 characters."),
@@ -72,6 +73,7 @@ export async function deleteAccount(input: { confirm: string; successors: Record
 
   const { error } = await admin.auth.admin.deleteUser(ctx.userId);
   if (error) return { error: "Couldn't delete your account. Please try again." };
+  trackServer(ctx.userId, "account_deleted");
   await ctx.supabase.auth.signOut();
   (await cookies()).delete(ACTIVE_LIST_COOKIE);
   redirect("/goodbye");
