@@ -69,3 +69,28 @@ export async function signInWithCode(page: Page, email: string, path = "/sign-in
   await page.getByLabel("6-digit code").fill(codeFrom(mail));
   await page.getByRole("button", { name: "Sign in" }).click();
 }
+
+/** A brand-new account that skipped onboarding, sitting on the dashboard. */
+export async function newUserOnDashboard(page: Page, label = "user") {
+  const email = uniqueEmail(label);
+  await signInWithCode(page, email);
+  await expect(page).toHaveURL(/\/app\/welcome$/);
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await expect(page).toHaveURL(/\/app$/);
+  return email;
+}
+
+export async function addPerson(page: Page, name: string, budget?: string) {
+  await page.goto("/app/people/new");
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  if (budget) await page.getByLabel("Budget for this person").fill(budget);
+  await page.getByRole("button", { name: "Add person" }).click();
+  await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+}
+
+export async function quickAddGift(page: Page, title: string, price?: string) {
+  await page.getByPlaceholder("What's the gift?").fill(title);
+  if (price) await page.getByLabel("Price").fill(price);
+  await page.getByRole("button", { name: "Add gift" }).click();
+  await expect(page.getByTestId("gift").filter({ hasText: title })).toBeVisible();
+}

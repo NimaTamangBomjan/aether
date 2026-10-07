@@ -9,9 +9,8 @@ test("a signed-out visitor opening a private page is sent to sign in", async ({ 
 test("new user signs up with the emailed code and lands in the app", async ({ page }) => {
   const email = uniqueEmail("code");
   await signInWithCode(page, email);
-  await expect(page).toHaveURL(/\/app$/);
-  await expect(page.getByRole("heading", { name: /^Hi / })).toBeVisible();
-  await expect(page.getByText("Your list: Holidays 2026")).toBeVisible();
+  await expect(page).toHaveURL(/\/app\/welcome$/);
+  await expect(page.getByRole("heading", { name: /^Welcome, code-/ })).toBeVisible();
 });
 
 test("the email link works even in a different browser", async ({ page, browser }) => {
@@ -26,8 +25,8 @@ test("the email link works even in a different browser", async ({ page, browser 
   const otherBrowser = await browser.newContext();
   const other = await otherBrowser.newPage();
   await other.goto(link);
-  await expect(other).toHaveURL(/\/app$/);
-  await expect(other.getByRole("heading", { name: /^Hi / })).toBeVisible();
+  await expect(other).toHaveURL(/\/app\/welcome$/);
+  await expect(other.getByRole("heading", { name: /^Welcome/ })).toBeVisible();
   await otherBrowser.close();
 });
 
@@ -56,7 +55,7 @@ test("wrong input gets a friendly message", async ({ page }) => {
 
 test("signing out ends the session", async ({ page }) => {
   await signInWithCode(page, uniqueEmail("signout"));
-  await expect(page).toHaveURL(/\/app$/);
+  await expect(page).toHaveURL(/\/app\/welcome$/);
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/app");

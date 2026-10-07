@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 2: Recipients, gifts and the dashboard (starting)
+- **Current stage:** 3: AI gift ideas (next)
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -21,6 +21,7 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 ## Needs from the owner (see the kickoff plan, section 3)
 | When | What | Status |
 |---|---|---|
+| **Now** | **GitHub access: push was refused (403). Reconnect GitHub at https://claude.ai/connect-github and install the Claude GitHub App on `aether`. Until then work is only saved inside the container.** | **blocking pushes** |
 | Now | Start the Stripe account (test mode is enough for now) | waiting |
 | By Oct 15 | Anthropic API key → cloud environment as `APP_ANTHROPIC_API_KEY` (owner adds credits personally) | waiting |
 | By Oct 15 | Allow domains in the cloud environment's network settings: `*.supabase.co`, `api.supabase.com`, `*.stripe.com`, `*.stripe.network`, `*.stripecdn.com`, `api.resend.com`, `*.posthog.com`, `*.sentry.io` | waiting |
@@ -29,6 +30,64 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 2: People, gifts and the dashboard ✅ (Oct 7)
+
+**Plan:** see the git history of this file. In short:
+- pages for the dashboard, onboarding, people and gifts;
+- pure tested logic for money, budgets and dates;
+- one additive migration;
+- an active-list cookie.
+
+**Done**
+- **Dashboard (`/app`):**
+  - spent, left (or over) and the total budget, with a colored bar;
+  - "N of M still need a gift" and the amount not yet assigned to anyone;
+  - people listed "still needs a gift" first, each with their own colored bar;
+  - an archived section, and an empty state;
+  - the owner can edit the total budget in a dialog.
+- **Onboarding (`/app/welcome`):** total budget (optional), then the first person, then their page. It saves the browser's time zone, and "Skip setup" is always there. The AI step is wired in Stage 3.
+- **People:**
+  - add, edit, archive/unarchive, and delete with an "are you sure?" step;
+  - relationship from a list, or your own words;
+  - budget, age range, interests as tags, notes, and don't-buy notes;
+  - only the owner can change people (the app checks, and so does the database).
+- **Gifts:**
+  - quick add (title + price) on the person's page;
+  - one-tap "Mark bought → wrapped → given", updated instantly on screen and then saved;
+  - a full edit form: price × quantity, status, bought by, store, dates, link, notes;
+  - entering a store with no return-by date fills in 30 days after purchase (editable);
+  - marking a gift bought fills in today's date in the person's time zone;
+  - return-by badges count down the days.
+- **Free limit:** at 5 people the Add button is replaced by "You've added 5 people. Unlock unlimited people for $9.99." The database blocks a 6th either way. `/app/upgrade` is a placeholder until Stage 5.
+- **Migration `20261008000000_stage2.sql`:**
+  - `list_plan()`;
+  - `set_gift_status()` now also fills in the purchase date;
+  - only real time-zone names are accepted.
+- **Logic, as pure tested functions:**
+  - `src/lib/money.ts`: whole cents, no floating-point errors;
+  - `src/lib/budget.ts`;
+  - `src/lib/dates.ts`;
+  - `src/lib/validation.ts`: all form input checked on the server with Zod.
+
+**Checks (all run, all passing)**
+- Type check, lint, production build: clean.
+- Unit tests: 54 (money, budget colors and totals, sorting, time zones including the Nov 1 clock change, return-by dates, form validation).
+- Database security tests: 24 (unchanged, still passing).
+- Browser tests: 32 (16 flows × phone + desktop), with a clean console in every test. The flows:
+  - onboarding;
+  - quick add, one-tap status, and totals updating immediately (including going over budget);
+  - sorting;
+  - the return-by suggestion;
+  - the free limit prompt;
+  - archive, unarchive and delete with confirmation;
+  - wrong input;
+  - a second user getting a 404 on the first user's person;
+  - the empty state;
+  - plus all the Stage 1 sign-in flows.
+- Screens checked by screenshot: phone, desktop, dark mode.
 
 ---
 
@@ -76,6 +135,9 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Local Supabase runs only what we need:** database, auth, API gateway, REST, test inbox. Images come from Docker Hub because the default registry is blocked.
 - **Sign-in link:** verifies a one-time token (`token_hash`) rather than the browser-bound flow, so it works when the email opens in another browser or outside the installed app.
 - **Tests sign in test users with passwords created through the admin API.** The app itself never shows a password option.
+- **Native pickers on phones:** relationship, age range and status use the phone's own picker (fast and familiar) instead of a custom dropdown.
+- **Money input** accepts "25", "24.99", "$1,299.99" and is stored as whole cents.
+- **Gift edits by members:** members can edit and delete only gifts they added. Status can be changed by anyone who can see the gift.
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Known issues
@@ -84,8 +146,11 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
 
 ## Next step
-Stage 2:
-- people (add, edit, delete, archive, with the free limit shown in a friendly way);
-- gifts (quick-add, one-tap status, suggested return-by date);
-- the dashboard (totals, colors, "still needs a gift" first);
-- 3-step onboarding.
+Stage 3, AI gift ideas:
+- server route with the Anthropic SDK and a Zod-checked 5-idea format, retrying once if the answer comes back malformed;
+- names scrubbed from notes;
+- free (10) and paid (100) limits per list, a 10-per-minute rate limit, and failures don't use up a request;
+- the ideas screen, "Save as gift idea", "More like this" and "Different direction";
+- wiring onboarding step 3.
+
+Real AI calls need the Anthropic key. Until it's added, everything is built and tested with the AI service swapped for a stand-in in tests only.
