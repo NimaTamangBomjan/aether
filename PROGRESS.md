@@ -84,7 +84,8 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 **Checks**
 - Typecheck, lint and production build pass; the browser console stays clean on every page tested.
 - Unit and database tests: 180 passing.
-- Browser tests: see the run recorded under Security review #2's checks below.
+- Browser tests: 106 passing at phone (375px) and desktop (1280px) sizes, with the browser console clean on every page. 4 skipped: the real Stripe Checkout test, which runs once Stripe test keys exist.
+- `npm audit --omit=dev`: 0 issues.
 
 ---
 
