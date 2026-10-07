@@ -8,6 +8,9 @@ const requests = [];
 const seen = new Map();
 let counter = 0;
 
+// FAKE_AI_PRETTY=1 gives clean titles and round prices (used for landing-page screenshots).
+const PRETTY = process.env.FAKE_AI_PRETTY === "1";
+
 const BASE = [
   ["Hummingbird feeder with window mount", "item", "A cheerful way to enjoy birds every morning."],
   ["Botanical garden day passes", "experience", "A relaxing outing among the plants they love."],
@@ -53,8 +56,10 @@ createServer(async (req, res) => {
   const budget = Number(user.match(/Remaining budget: \$([\d.]+)/)?.[1] ?? 50);
   const n = ++counter;
   const ideas = BASE.map(([title, category, why], i) => ({
-    title: `${title} ${n}-${i + 1}`,
-    estimated_price_usd: Math.max(1, Math.round(budget * [0.2, 0.35, 0.5, 0.7, 0.9][i] * 100) / 100),
+    title: PRETTY ? title : `${title} ${n}-${i + 1}`,
+    estimated_price_usd: PRETTY
+      ? Math.max(5, Math.round((budget * [0.3, 0.6, 0.45, 0.25, 0.4][i]) / 5) * 5)
+      : Math.max(1, Math.round(budget * [0.2, 0.35, 0.5, 0.7, 0.9][i] * 100) / 100),
     why_it_fits: why,
     category,
   }));

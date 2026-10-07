@@ -50,7 +50,7 @@ test("ideas stay in budget, send no names, and follow-ups each use one request",
   await expect(page.getByTestId("idea")).toHaveCount(5);
   await expect(page.getByTestId("ideas-left")).toHaveText("9 of 10 idea requests left");
 
-  const prices = await page.getByTestId("idea").locator("p.shrink-0").allTextContents();
+  const prices = await page.getByTestId("idea-price").allTextContents();
   for (const p of prices) expect(Number(p.replace(/[~$,]/g, ""))).toBeLessThanOrEqual(50);
 
   const sent = await aiRequestsContaining(tag);

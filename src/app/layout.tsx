@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: { default: "GiftLedger: holiday gift planner and budget tracker", template: "%s · GiftLedger" },
   description:
     "Plan holiday gifts without overspending: a budget for every person, gift ideas, a shared family list so nobody buys the same thing, and return reminders.",
+  applicationName: "GiftLedger",
+  appleWebApp: { capable: true, title: "GiftLedger", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
+  openGraph: { type: "website", siteName: "GiftLedger", locale: "en_US" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

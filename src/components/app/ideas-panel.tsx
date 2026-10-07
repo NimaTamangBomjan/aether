@@ -138,11 +138,17 @@ export function IdeasPanel({
               <li key={idea.title} className="space-y-2 rounded-xl border bg-card p-4 shadow-xs" data-testid="idea">
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-semibold">{idea.title}</p>
-                  <p className="shrink-0 font-semibold">~{formatCents(Math.round(idea.estimated_price_usd * 100))}</p>
+                  <p className="shrink-0 font-semibold" data-testid="idea-price">
+                    ~{formatCents(Math.round(idea.estimated_price_usd * 100))}
+                  </p>
                 </div>
-                <p className="text-sm text-muted-foreground">{idea.why_it_fits}</p>
+                <p className="text-sm text-muted-foreground">
+                  <Badge variant="secondary" className="mr-2 align-middle">
+                    {CATEGORY_LABEL[idea.category]}
+                  </Badge>
+                  {idea.why_it_fits}
+                </p>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="secondary">{CATEGORY_LABEL[idea.category]}</Badge>
                   {saved.has(idea.title) ? (
                     <span className="px-3 text-sm font-medium text-ok-foreground">Saved ✓</span>
                   ) : (
