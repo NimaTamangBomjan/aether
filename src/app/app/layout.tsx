@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Users } from "lucide-react";
-import { signOut } from "@/app/sign-in/actions";
+import { Settings, Users } from "lucide-react";
 import { ListSwitcher } from "@/components/app/list-switcher";
 import { Button } from "@/components/ui/button";
 import { getListContext } from "@/lib/data/list";
@@ -21,11 +20,11 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
               <Users aria-hidden /> Family
             </Link>
           </Button>
-          <form action={signOut}>
-            <Button type="submit" variant="ghost" size="sm">
-              Sign out
-            </Button>
-          </form>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/app/settings">
+              <Settings aria-hidden /> Settings
+            </Link>
+          </Button>
         </nav>
       </header>
       <main className="flex-1 px-4 pb-10">{children}</main>

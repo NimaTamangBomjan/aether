@@ -56,6 +56,7 @@ test("wrong input gets a friendly message", async ({ page }) => {
 test("signing out ends the session", async ({ page }) => {
   await signInWithCode(page, uniqueEmail("signout"));
   await expect(page).toHaveURL(/\/app\/welcome$/);
+  await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.goto("/app");

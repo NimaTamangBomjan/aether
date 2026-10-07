@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 7: Settings, export, account deletion (next). Security review #1 running
+- **Current stage:** fixing security review #1 findings, then 8: Landing page, SEO, legal, PWA
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,34 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 7: Settings, export, account deletion ✅ (Oct 7)
+
+**Done**
+- **`/app/settings`:**
+  - your name (what your family sees), time zone (common US zones first, plus "Use this device's time zone"), and return reminder emails on/off;
+  - your plan;
+  - Export my data;
+  - Sign out (moved here from the header; the header now shows Family and Settings).
+- **Export my data (`/api/export`):** a CSV of every person and gift you can see on every list you're on, on any plan. It runs with your own login, so hidden gifts never appear. Cells that spreadsheets would run as formulas are neutralized, and it opens correctly in Excel.
+- **Delete my account:** type DELETE to confirm.
+  - For each shared list you own, you choose who takes over (default: the first member). Lists only you use are deleted.
+  - Your account, profile and memberships are removed. Gifts you added to other people's lists stay, without your name. Payment records stay, without your identity.
+  - You're taken to `/goodbye`. Signing in again starts a fresh account.
+- **Migration `20261013000000_stage7_account.sql`:** `transfer_list_ownership()`, server-only. It hands over only to a member, and only from the owner. The pass doesn't transfer.
+
+**Checks:**
+- Database tests +4: handing over a list, and deletion keeping payment records without the person.
+- Unit tests +3: CSV quoting and formula blocking.
+- Browser tests +5 flows × 2:
+  - settings saved, and an empty name rejected;
+  - the export includes your data and **not a gift hidden from you**;
+  - signed-out visitors can't export;
+  - deleting an account, and signing in again fresh;
+  - an owner deleting their account hands the list to the chosen member, who gets owner controls.
+- Full suite: 136 unit and database tests and 88 browser tests passing.
 
 ---
 
