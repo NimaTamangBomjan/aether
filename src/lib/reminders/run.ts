@@ -2,7 +2,7 @@ import "server-only";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email/send";
 import { costWarningEmail, reminderEmail, type ReminderItem } from "@/lib/email/templates";
-import { unsubscribeUrl } from "@/lib/email/unsubscribe";
+import { oneClickUnsubscribeUrl, unsubscribeUrl } from "@/lib/email/unsubscribe";
 import { serverEnv } from "@/lib/server-env";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -53,7 +53,11 @@ export async function runReminders(now: Date = new Date()): Promise<ReminderRun>
     const sent = await sendEmail(
       first.email,
       reminderEmail({ name: first.display_name, items: mailItems, today: first.local_date, appUrl: env.NEXT_PUBLIC_APP_URL, unsubscribeUrl: unsubscribe }),
-      { tag: "reminder", idempotencyKey: `reminder-${userId}-${first.local_date}`, unsubscribeUrl: unsubscribe },
+      {
+        tag: "reminder",
+        idempotencyKey: `reminder-${userId}-${first.local_date}`,
+        oneClickUnsubscribeUrl: secret ? oneClickUnsubscribeUrl(env.NEXT_PUBLIC_APP_URL, userId, secret) : undefined,
+      },
     );
     await admin.rpc("finish_reminder", { p_user: userId, p_local_date: first.local_date, p_sent: sent });
     if (sent) result.sent++;

@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useCaptcha } from "@/components/captcha";
 import { createClient } from "@/lib/supabase/client";
 
 const emailSchema = z.string().trim().toLowerCase().pipe(z.email());
@@ -81,11 +82,19 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
   const [notice, setNotice] = useState<string | null>(null);
   const [sending, startSending] = useTransition();
   const [verifying, startVerifying] = useTransition();
+  const { mount: captchaMount, ...captcha } = useCaptcha();
 
   function sendCode(e?: FormEvent) {
     e?.preventDefault();
     const parsed = emailSchema.safeParse(email);
     if (!parsed.success) return setError("Please enter a valid email address.");
+    if (captcha.enabled && !captcha.token) {
+      return setError(
+        captcha.failed
+          ? "We couldn't check that you're a person. Reload the page and try again."
+          : "One moment: we're checking that you're a person. Try again in a few seconds.",
+      );
+    }
     startSending(async () => {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
       const { error: sendError } = await createClient().auth.signInWithOtp({
@@ -93,8 +102,11 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
         options: {
           shouldCreateUser: true,
           emailRedirectTo: `${appUrl}/auth/confirm?next=${encodeURIComponent(next)}`,
+          captchaToken: captcha.token ?? undefined,
         },
       });
+      // Each check works once; get a fresh one for "Send a new code".
+      captcha.reset();
       if (sendError) return setError(friendlySendError(sendError.message, sendError.status));
       setEmail(parsed.data);
       setError(null);
@@ -120,51 +132,49 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
     });
   }
 
-  if (step === "email") {
-    return (
-      <div className="space-y-4">
-        {GOOGLE_ENABLED && <GoogleButton next={next} />}
-        <form onSubmit={sendCode} className="space-y-4" noValidate>
-          <div className="space-y-2">
-            <Label htmlFor="email">Your email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={Boolean(error)}
-              aria-describedby={error ? "email-error" : undefined}
-            />
-          </div>
-          {error && (
-            <p id="email-error" role="alert" className="text-sm text-over-foreground">
-              {error}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={sending}>
-            {sending ? "Sending…" : "Email me a sign-in code"}
-          </Button>
-          <p className="text-sm text-muted-foreground">
-            New here? This also creates your free account. By continuing you agree to our{" "}
-            <Link href="/terms" className="underline underline-offset-4">
-              Terms
-            </Link>{" "}
-            and{" "}
-            <Link href="/privacy" className="underline underline-offset-4">
-              Privacy Policy
-            </Link>
-            .
+  const emailStep = (
+    <div className="space-y-4">
+      {GOOGLE_ENABLED && <GoogleButton next={next} />}
+      <form onSubmit={sendCode} className="space-y-4" noValidate>
+        <div className="space-y-2">
+          <Label htmlFor="email">Your email</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "email-error" : undefined}
+          />
+        </div>
+        {error && (
+          <p id="email-error" role="alert" className="text-sm text-over-foreground">
+            {error}
           </p>
-        </form>
-      </div>
-    );
-  }
+        )}
+        <Button type="submit" className="w-full" disabled={sending}>
+          {sending ? "Sending…" : "Email me a sign-in code"}
+        </Button>
+        <p className="text-sm text-muted-foreground">
+          New here? This also creates your free account. By continuing you agree to our{" "}
+          <Link href="/terms" className="underline underline-offset-4">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="underline underline-offset-4">
+            Privacy Policy
+          </Link>
+          .
+        </p>
+      </form>
+    </div>
+  );
 
-  return (
+  const codeStep = (
     <div className="space-y-4">
       <p role="status" className="text-base">
         {notice} Type it below, or tap the button in the email.
@@ -217,6 +227,13 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
           Use a different email
         </Button>
       </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {step === "email" ? emailStep : codeStep}
+      {captcha.enabled && <div ref={captchaMount} />}
     </div>
   );
 }

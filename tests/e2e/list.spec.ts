@@ -1,5 +1,5 @@
 import { addDays, formatDate, todayInTimeZone } from "../../src/lib/dates";
-import { addPerson, expect, newUserOnDashboard, quickAddGift, signInWithCode, test, uniqueEmail } from "./helpers";
+import { addPerson, expect, newBrowserContext, newUserOnDashboard, quickAddGift, signInWithCode, test, uniqueEmail } from "./helpers";
 
 const today = () => todayInTimeZone("America/New_York");
 
@@ -134,7 +134,7 @@ test("one person can't open another person's list", async ({ page, browser }) =>
   await addPerson(page, "Secret Santa Target");
   const privateUrl = page.url();
 
-  const other = await browser.newContext();
+  const other = await newBrowserContext(browser);
   const otherPage = await other.newPage();
   await newUserOnDashboard(otherPage, "owner-b");
   const response = await otherPage.goto(privateUrl);

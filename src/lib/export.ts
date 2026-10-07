@@ -8,7 +8,8 @@ import { STATUS_LABEL, type Gift, type Recipient } from "@/lib/types";
 export function csvCell(value: string | number | null | undefined): string {
   if (value == null) return "";
   let text = String(value);
-  if (typeof value === "string" && /^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  // Also when spaces or line breaks come first: some spreadsheet apps skip those.
+  if (typeof value === "string" && /^\s*[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return /[",\r\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text;
 }
 

@@ -46,6 +46,17 @@ test("analytics record key steps by random account id only, never emails or name
   for (const e of (await events()).filter((x) => x.event === "$pageview")) {
     expect(String(e.properties.$current_url ?? "")).not.toContain("?");
   }
+
+  // Invite links are secrets: opening one sends nothing that contains it, in any property.
+  const token = "InviteTokenForAnalyticsTestAbCdEfGhIjKlMnOp";
+  await page.goto(`/join/${token}`);
+  await page.waitForTimeout(2500);
+  // Arrive at the next page from the invite page, so the browser reports it as the referrer.
+  await page.goto("/app/settings", { referer: page.url() });
+  await expect
+    .poll(async () => (await events()).filter((e) => e.event === "$pageview" && String(e.properties.$current_url).endsWith("/app/settings")).length, { timeout: 20_000 })
+    .toBeGreaterThan(0);
+  expect(JSON.stringify(await events())).not.toContain(token);
 });
 
 test("analytics set no cookies and store nothing in the browser", async ({ page, context }) => {

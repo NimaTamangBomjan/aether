@@ -46,17 +46,40 @@ ${button(`${opts.appUrl}/app`, "Open my list")}`,
   };
 }
 
-export function inviteEmail(opts: { inviterName: string; listName: string; inviteUrl: string }): Email {
-  const who = opts.inviterName || "A family member";
+/**
+ * A name safe to show in an email sent to a stranger: letters, spaces, hyphens and apostrophes
+ * only, so nobody can put a web address or a "verify your account" message in it.
+ */
+export function plainName(name: string): string | null {
+  const trimmed = name.trim();
+  return /^[\p{L}\p{M}][\p{L}\p{M}' -]{0,39}$/u.test(trimmed) ? trimmed : null;
+}
+
+/** The subject is fixed and the list's name isn't included: invite emails carry no text a stranger chose. */
+export function inviteEmail(opts: { inviterName: string; inviteUrl: string }): Email {
+  const who = plainName(opts.inviterName) ?? "A family member";
   return {
-    subject: `GiftLedger: ${who} invited you to their family gift list`,
+    subject: "You're invited to a family gift list on GiftLedger",
     html: layout(
       "You're invited to a family gift list",
-      `<p><strong>${escapeHtml(who)}</strong> invited you to join <strong>${escapeHtml(opts.listName)}</strong> on GiftLedger, so nobody buys the same gift twice.</p>
+      `<p><strong>${escapeHtml(who)}</strong> invited you to their family gift list on GiftLedger, so nobody buys the same gift twice.</p>
 ${button(opts.inviteUrl, "Join the list")}
 <p style="font-size:14px;color:#6b625b">This link works once and expires in 7 days. If you weren't expecting this, you can ignore it.</p>`,
     ),
-    text: `${who} invited you to join "${opts.listName}" on GiftLedger, so nobody buys the same gift twice.\n\nJoin: ${opts.inviteUrl}\n\nThis link works once and expires in 7 days.\n`,
+    text: `${who} invited you to their family gift list on GiftLedger, so nobody buys the same gift twice.\n\nJoin: ${opts.inviteUrl}\n\nThis link works once and expires in 7 days. If you weren't expecting this, you can ignore it.\n`,
+  };
+}
+
+/** To the owner, once a day at most, when invite emails pause because too many were sent today. */
+export function invitesPausedEmail(): Email {
+  return {
+    subject: "GiftLedger: invite emails paused for today",
+    html: layout(
+      "Invite emails are paused for today",
+      `<p>More than 500 invite emails were sent in the last 24 hours, so sending them has paused automatically. People can still copy invite links and send them themselves.</p>
+<p>If this is real growth, great: ask Claude to raise the limit. If it looks like abuse, check the Resend dashboard.</p>`,
+    ),
+    text: "More than 500 invite emails were sent in the last 24 hours, so sending them has paused automatically. People can still copy invite links.\n\nIf this is real growth, ask Claude to raise the limit. If it looks like abuse, check the Resend dashboard.\n",
   };
 }
 

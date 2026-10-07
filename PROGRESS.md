@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 10: Full journey test, security review #2, README, launch checklist (in progress)
+- **Current stage:** 10 ✅ built and tested. All 10 stages are done; what's left needs the owner (keys, accounts, domain, headline, legal review, purchases). See "Needs from the owner" and the launch checklist below.
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -28,6 +28,7 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 21 | Stripe test keys + Season Pass price ID → cloud environment | waiting |
 | By Oct 14–17 | Supabase project (US East) + Vercel connected to GitHub | waiting |
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
+| By Oct 21 | Cloudflare account (free) → Turnstile widget: Site Key → Vercel `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, Secret Key → Supabase CAPTCHA (README step 1.9) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
 
@@ -67,6 +68,65 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - Daily Supabase backups: ⏳ Supabase Pro (owner).
 - Sentry alerts to email: ⏳ owner setting (README step 7).
 - `LAUNCH.md`: ✅
+
+---
+
+## Stage 10: Full journey test, security review #2, README, launch plan ✅ (Oct 7)
+
+**Done**
+- **Journey test** (`tests/e2e/journey.spec.ts`, phone and desktop sizes): sign up → add a person → AI ideas → save an idea → invite a family member who joins → upgrade (Stripe-signed webhook) → the family member marks it bought → the return reminder email arrives.
+- **Google sign-in** (behind `NEXT_PUBLIC_GOOGLE_SIGN_IN=1`), with `/auth/callback`, a safe redirect, and a clear message if Google fails.
+- **Security review #2** by a separate agent: everything fixed (section above).
+- **Sign-in CAPTCHA** (Cloudflare Turnstile) ready to switch on, and a daily tidy-up job.
+- **`README.md`:** plain-language setup, the deploy steps for every service, where every key lives, and troubleshooting.
+- **`LAUNCH.md`:** launch-week plan, short-video ideas, posts to copy, where to share, what to watch.
+
+**Checks**
+- Typecheck, lint and production build pass; the browser console stays clean on every page tested.
+- Unit and database tests: 187 passing.
+- Browser tests: see the run recorded under Security review #2's checks below.
+
+---
+
+## Security review #2 (CLAUDE.md §15, before launch) ✅ fixed (Oct 7)
+
+A second, separate review agent re-attacked the whole app with throwaway users against the local stack and a production build, and changed no files.
+- No Critical or High findings.
+- All review #1 fixes held up against fresh bypass attempts.
+- Everything it found is fixed below, with regression tests:
+  - `tests/db/security-review-2.test.ts` (13 tests);
+  - unit tests for the scrubbing, email and validation changes;
+  - browser tests for unsubscribe, invites, analytics and the CAPTCHA.
+- Migration: `20261015000000_security_review_2.sql`.
+- For the database fixes (M1, L3, L4), I proved each test fails with the fix switched off and passes with it on.
+
+| # | Finding | Fix |
+|---|---|---|
+| M1 | A signed-in session could set a password (Supabase's "update user" endpoint), giving someone with a few minutes in a family member's browser a permanent backdoor. Changing the account's email to a victim's address (who clicks one link) handed over their future sign-ins. | Any password set is replaced with random bytes nobody knows, every time. Email changes are refused by the database. Supabase still sends its "change email" and "reset password" emails before checking, so both templates now contain no links. "Secure password change" is on. |
+| M2 | Invite tokens reached PostHog in `$pathname`. | Every analytics property is cleaned: no query strings, fragments or invite tokens, even URL-encoded inside another address. Invite, unsubscribe and sign-in pages aren't tracked at all. A browser test opens an invite link and checks the token never leaves. |
+| M3 | Email apps' own one-click "Unsubscribe" button posted to the page, which did nothing. | `List-Unsubscribe` now points at `/api/unsubscribe` (the RFC 8058 endpoint); the link in the email body still opens the page. A browser test presses the one-click button the way Gmail does. |
+| M4 | "Email an invite" could be used to send spam or phishing from GiftLedger's domain (attacker-chosen name and list name in the subject and body). | Fixed subject and no list name. The inviter's name appears only if it's plain letters. 3 invite emails a day per account (10 with the pass). The same address can't be emailed twice in a day by anyone, or within 30 days by the same account. Everything pauses at 500 a day across the app, and the owner gets an email. Only a one-way fingerprint of each address is kept, for 30 days. Display names can't contain web or email addresses. |
+| M5 | Supabase's email limit is one shared budget for the whole project, and anyone can request codes for any address. The checklist said the limits were per visitor, which is wrong. | Cloudflare Turnstile support was added to the sign-in form (on when `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set). All browser tests run with it on, against a local stand-in. The daily job removes sign-ups never finished within a day. The production checklist is corrected, with the dashboard steps. |
+| L1 | Error reports could still carry an invite token (`contexts.nextjs.request_path`), query strings in navigation and network breadcrumbs, and people's names in click labels. | The same cleaning runs on every part of a report, including breadcrumbs. Click and typing breadcrumbs are dropped. |
+| L2 | Line breaks in names and titles (possible straight through the database API) went raw into email subjects. | Database checks refuse control characters in gift titles and stores, people's names, display names and list names. Forms turn pasted line breaks into spaces. Every subject is forced onto one line before sending. |
+| L3 | A partial refund that arrived before the payment event left the pass in place after a later full refund. | The payment is attached to whatever refund row arrived first, so a later full refund removes the pass. |
+| L4 | After account deletion, Supabase's sign-in log still held the email and id; the Privacy Policy said everything was deleted. | Deleting an account deletes its sign-in log lines. The daily job keeps sign-in logs for 30 days only. The Privacy Policy draft now says what's kept, where and for how long. |
+| L5 | The display name came from whatever "full name" was attached to a sign-up, so someone pre-registering your email chose the name your family sees. | The name is taken only from Google. Everyone else starts with the part of their email before the @. |
+
+**Info items acted on**
+- PostHog: README now says to turn on "Discard client IP data".
+- Sign-in emails said codes last 1 hour; they last 15 minutes. Fixed.
+- The export's formula guard now also covers values that start with spaces or a line break before `=`, `+`, `-` or `@`.
+
+**Info items accepted for now** (none of these is exploitable in a way that matters before launch):
+- The CSP has no `script-src`. Adding one needs nonces for Next.js inline scripts; revisit after launch.
+- An export of more than 1000 gifts on one list would be cut at 1000. Free lists hold 5 people; noted for later.
+- Someone who deletes their account and comes back must be re-linked by the owner.
+- A time-zone change between daily runs can shift one reminder by a day.
+- Guessing a 6-digit code is limited only by Supabase's per-address limits.
+- Server actions without an `Origin` header are accepted (Next.js behavior; same-site cookies protect them).
+
+**Checklist after the fixes:** all PASS (RLS, permission checks, secrets, webhook, paid status, invites, input validation, AI privacy, rate limits including email invites and the sign-in CAPTCHA, `npm audit --omit=dev` 0, hidden gifts, clickjacking and caching).
 
 ---
 
@@ -501,15 +561,22 @@ A separate review agent that didn't write the code checked every §15 item. It t
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Production setup checklist (Supabase dashboard; needed before launch)
-- **Auth → Providers → Email:** "Confirm email" ON (required by security fix H1); OTP expiry 900 seconds; leave the password minimum strong.
-- **Auth → Rate limits:** keep the defaults (or lower). Now that sign-in runs in the browser, they apply per visitor.
-- **Optional:** Auth → Bot protection → Cloudflare Turnstile (free) for the sign-in form. Needs a Turnstile site key; the code change is small.
+Full click-by-click steps are in README → "Putting it online".
+- **Auth → Providers → Email:**
+  - "Confirm email" ON (required by security fix H1);
+  - "Secure password change" ON (review #2 M1);
+  - OTP expiry 900 seconds; leave the password minimum strong.
+- **Auth → Rate limits:** Supabase's per-IP limits (sign-in attempts, code checks) apply per visitor now that sign-in runs in the browser. But the **email limit is one shared budget for the whole project**: raise "emails sent per hour" to at least 200 for launch week.
+- **Auth → Attack Protection → CAPTCHA: required.** Turnstile, with the secret key in Supabase and `NEXT_PUBLIC_TURNSTILE_SITE_KEY` in Vercel, both switched on together (review #2 M5).
 - **Auth → SMTP:** use Resend.
-- **Email templates:** use `supabase/templates/sign-in.html` for "Magic Link" and "Confirm signup".
+- **Email templates:**
+  - `sign-in.html` for "Magic Link" and "Confirm signup";
+  - `email-change.html` for "Change Email Address";
+  - `password-reset.html` for "Reset Password".
 - **URL configuration:** Site URL = production URL; redirect URLs = production URL + `/**`.
 - **Database:** apply `supabase/migrations/*` in order (`supabase db push`).
 - **Anthropic Console:** set a monthly spend limit (e.g. $50).
-- **PostHog:** Project settings → turn on cookieless server hash mode.
+- **PostHog:** Project settings → turn on cookieless server hash mode and "Discard client IP data".
 
 ## Known issues
 - **Real email not sent yet:** needs the Resend account, the API key and a verified sending domain (which needs the domain bought). Before launch, in the Supabase dashboard:
@@ -521,15 +588,13 @@ A separate review agent that didn't write the code checked every §15 item. It t
   2. Pay with test cards 4242 4242 4242 4242 (success) and 4000 0000 0000 0002 (declined), and confirm the pass unlocks and a decline shows Stripe's message.
 - **Stripe Tax is off** until the owner decides about sales tax.
 - **Real AI not tested yet:** needs the Anthropic key. Once `APP_ANTHROPIC_API_KEY` is in the cloud environment, run `npm run env:local && npm run test:ai-live`. That's 10 sample profiles at about 5 cents in total; it checks every answer and prints the ideas for review. Structured output for `claude-haiku-4-5` is assumed to work; if the API rejects it, the fallback is to drop `output_config` (the Zod check stays).
-- **AI cost warning:** the "projected cost over $50/month" alert will be added to the daily cron in Stage 6. Usage is already logged per request.
 - `npm audit` reports 5 "high" issues, all in development-only lint tooling (`braces`, used by `eslint-config-next`), with no fixed version yet. `npm audit --omit=dev` (what ships to users) reports 0. Re-check before launch.
-- Terms and Privacy pages are placeholders until Stage 8.
-- Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
+- Terms and Privacy pages are drafts: the owner (ideally with a lawyer) must review them before launch.
+- **CAPTCHA not tested against Cloudflare itself:** the browser tests use a stand-in for Turnstile's script. After the site key and secret are set, sign in once on the live site to confirm it.
 
 ## Next step
-Stage 10:
-- the full journey test (sign up → person → AI ideas → save → invite → upgrade → reminder email);
-- security review #2 by a separate agent;
-- README in plain language;
-- the launch checklist;
-- `LAUNCH.md`.
+All 10 stages are built and tested locally. Next, in order:
+1. **GitHub access** (owner): reconnect GitHub so the local commits can be pushed. Nothing is online until then.
+2. **Keys and accounts** (owner, table at the top): Stripe test keys, the Anthropic key, Supabase and Vercel projects, Resend, PostHog, Sentry, and Cloudflare Turnstile. As each arrives, Claude runs its live check: `npm run test:ai-live`, the Stripe test-card run (`STRIPE_LIVE_TEST=1`), and a real sign-in email.
+3. **Decisions** (owner): the headline (A/B/C), the legal review (refund policy, governing state), and the support email.
+4. **Buffer days** (Nov 5–9): fix anything the live checks find. Run the full suite again. Go live (owner switches Stripe to live mode).

@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { scrubSentryEvent } from "@/lib/sentry-scrub";
+import { scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-scrub";
 
 // Server-side error reporting with Sentry. Does nothing until SENTRY_DSN is set.
 export async function register() {
@@ -10,6 +10,7 @@ export async function register() {
     environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
     tracesSampleRate: 0,
     beforeSend: scrubSentryEvent,
+    beforeBreadcrumb: scrubBreadcrumb,
   });
 }
 

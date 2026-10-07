@@ -9,6 +9,8 @@
 //   the server by random account id only: see analytics-server.ts.
 // The library loads after the page is idle, so it never slows the first view.
 
+import { isPrivatePath, scrubProperties } from "@/lib/scrub";
+
 type PostHog = typeof import("posthog-js").default;
 
 const KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -30,13 +32,8 @@ function load(): Promise<PostHog | null> {
       disable_session_recording: true,
       disable_surveys: true,
       ip: false,
-      sanitize_properties: (props) => {
-        // Keep URLs without query strings (they can hold invite tokens or emails).
-        for (const key of ["$current_url", "$referrer", "$initial_referrer"]) {
-          if (typeof props[key] === "string") props[key] = String(props[key]).split("?")[0].replace(/\/join\/[^/]+/, "/join/[token]");
-        }
-        return props;
-      },
+      // Every address loses its query string and any invite token (they can hold secrets).
+      sanitize_properties: (props) => scrubProperties(props),
     });
     return posthog;
   });
@@ -44,5 +41,7 @@ function load(): Promise<PostHog | null> {
 }
 
 export function trackPageview(path: string) {
+  // Invite, unsubscribe and sign-in pages are never tracked: their addresses are secrets.
+  if (isPrivatePath(path)) return;
   void load().then((ph) => ph?.capture("$pageview", { $current_url: window.location.origin + path }));
 }

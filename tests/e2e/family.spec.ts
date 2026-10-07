@@ -1,5 +1,5 @@
 import type { Browser, Page } from "@playwright/test";
-import { addPerson, expect, newUserOnDashboard, quickAddGift, signInWithCode, test, uniqueEmail } from "./helpers";
+import { addPerson, expect, newBrowserContext, newUserOnDashboard, quickAddGift, signInWithCode, test, uniqueEmail } from "./helpers";
 
 async function createInviteLink(owner: Page) {
   await owner.goto("/app/family");
@@ -11,7 +11,7 @@ async function createInviteLink(owner: Page) {
 
 /** A second person, in their own browser, who signs up from the invite link and joins. */
 async function joinAsNewMember(browser: Browser, inviteUrl: string, label = "member") {
-  const context = await browser.newContext({ timezoneId: "America/New_York" });
+  const context = await newBrowserContext(browser, { timezoneId: "America/New_York" });
   const page = await context.newPage();
   const email = uniqueEmail(label);
   await page.goto(inviteUrl);
@@ -57,7 +57,7 @@ test("owner invites a family member who joins, sees the list and marks a gift bo
   await expect(page.getByText("Your free plan includes 1 family member.")).toBeVisible();
 
   // The same link can't be used twice.
-  const third = await browser.newContext();
+  const third = await newBrowserContext(browser);
   const t = await third.newPage();
   await signInWithCode(t, uniqueEmail("third"), `/sign-in?next=${encodeURIComponent(new URL(invite).pathname)}`);
   await expect(t.getByRole("alert").filter({ hasText: "already used" })).toBeVisible();

@@ -14,3 +14,8 @@ export function hashInviteToken(token: string) {
 export function isInviteTokenFormat(token: string) {
   return /^[A-Za-z0-9_-]{43}$/.test(token);
 }
+
+/** A one-way fingerprint of an invited email address, so repeat invites can be spotted without storing it. */
+export function hashInviteEmail(email: string) {
+  return createHash("sha256").update(`giftledger-invite-email:${email.trim().toLowerCase()}`).digest("hex");
+}

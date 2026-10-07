@@ -21,7 +21,7 @@ A phone-friendly holiday gift planner:
 | Payments | Stripe Checkout + webhook | `src/app/app/upgrade/`, `src/app/api/stripe/webhook/` |
 | AI gift ideas | Anthropic API, `claude-haiku-4-5` | `src/lib/ai/` |
 | Emails | Resend (and Supabase sign-in emails through Resend) | `src/lib/email/`, `supabase/templates/` |
-| Daily reminders | Vercel Cron, 9:00 AM Eastern | `vercel.json`, `src/lib/reminders/` |
+| Daily job: reminders and tidy-up | Vercel Cron, 9:00 AM Eastern | `vercel.json`, `src/app/api/cron/reminders/` |
 | Analytics | PostHog, cookieless | `src/lib/analytics*.ts` |
 | Errors | Sentry | `src/instrumentation*.ts` |
 | Hosting | Vercel | |
@@ -78,14 +78,25 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
    - **Confirm email: ON.** This is required for security.
    - **Email OTP Expiration: 900** (seconds).
 4. **Authentication → Emails → SMTP Settings:** turn on custom SMTP using Resend (step 5): host `smtp.resend.com`, port `465`, user `resend`, password = your Resend API key, sender = your `EMAIL_FROM` address.
-5. **Authentication → Emails → Templates:** for both **Magic Link** and **Confirm signup**:
-   - subject: `Your GiftLedger sign-in code: {{ .Token }}`
-   - body: paste the contents of `supabase/templates/sign-in.html`.
+5. **Authentication → Emails → Templates:**
+   - **Magic Link** and **Confirm signup:** subject `Your GiftLedger sign-in code: {{ .Token }}`, body = the contents of `supabase/templates/sign-in.html`.
+   - **Change Email Address:** subject `GiftLedger: no change was made`, body = `supabase/templates/email-change.html`.
+   - **Reset Password:** subject `GiftLedger doesn't use passwords`, body = `supabase/templates/password-reset.html`.
+
+   GiftLedger has no passwords and refuses email changes, but Supabase sends those two emails before it checks. These versions contain no links, so nobody can use them for phishing.
 6. **Authentication → URL Configuration:**
    - Site URL: `https://YOUR-DOMAIN`
    - Redirect URLs: `https://YOUR-DOMAIN/**` (add your Vercel preview URL too, if you use previews)
-7. **Project Settings → API:** you'll copy the URL, the anon key and the service_role key into Vercel in the next step.
-8. *(Recommended, paid)* Upgrade to Pro for daily backups you can restore.
+7. **Authentication → Sign In / Providers → Email:** turn on **Secure password change**. (There are no passwords; this is an extra lock.)
+8. **Authentication → Rate Limits:** the email limit is **one shared budget for the whole app**, not per visitor. Every sign-in code counts against it. Set "emails sent per hour" to at least **200** for launch week (Resend's free plan allows 100 a day, so check your Resend plan too).
+9. **Authentication → Attack Protection → CAPTCHA** (free, stops someone using up that email budget):
+   1. At dash.cloudflare.com → **Turnstile → Add widget**: add your domain, widget mode **Managed**. Copy the **Site Key** and **Secret Key**.
+   2. In Supabase: turn CAPTCHA on, provider **Turnstile**, paste the **Secret Key**.
+   3. In Vercel: set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the **Site Key** and redeploy.
+
+   Do steps 2 and 3 together: with only one of them, sign-in stops working.
+10. **Project Settings → API:** you'll copy the URL, the anon key and the service_role key into Vercel in the next step.
+11. *(Recommended, paid)* Upgrade to Pro for daily backups you can restore.
 
 ### 2. Vercel (hosting)
 1. Go to vercel.com → **Add New → Project** → import this GitHub repository.
@@ -123,7 +134,7 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
 4. In Vercel, set `NEXT_PUBLIC_GOOGLE_SIGN_IN=1` and redeploy. The "Continue with Google" button then appears.
 
 ### 7. PostHog and Sentry (optional, free tiers)
-- **PostHog:** create a project (US cloud), copy the project API key and host. In **Project settings**, turn on **cookieless server hash mode**.
+- **PostHog:** create a project (US cloud), copy the project API key and host. In **Project settings**, turn on **cookieless server hash mode** and **Discard client IP data**.
 - **Sentry:** create a Next.js project and copy the DSN into both `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN`. In **Alerts**, send new issues to your email.
 
 ---
@@ -150,6 +161,7 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
 | `NEXT_PUBLIC_APP_URL` | Your site address, e.g. `https://giftledger.app` | You | No |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Contact address in the footer and legal pages | You | No |
 | `NEXT_PUBLIC_GOOGLE_SIGN_IN` | `1` once Google sign-in is set up | You | No |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | The "are you a person?" check on sign-in | Cloudflare → Turnstile → your widget (Site Key). The Secret Key goes in Supabase only | No |
 
 Keys starting with `NEXT_PUBLIC_` are visible in the browser by design, so none of them are secrets. Everything marked **Yes** must only ever be in Vercel's settings (and your password manager).
 
@@ -161,3 +173,6 @@ Keys starting with `NEXT_PUBLIC_` are visible in the browser by design, so none 
 - **Paid but not unlocked:** check Stripe → Developers → Webhooks → your endpoint → recent deliveries. Each one should say 200. Stripe retries failed ones automatically.
 - **No reminder emails:** check Vercel → the project → Cron Jobs (logs), and that the gift is Bought or Wrapped with a return-by date, on a list with a Season Pass.
 - **"Gift ideas aren't switched on yet":** `ANTHROPIC_API_KEY` is missing in Vercel.
+- **"We couldn't check that you're a person":** the Turnstile site key in Vercel doesn't match the widget, or your domain isn't on the widget's list in Cloudflare.
+- **Sign-in says "Too many tries" for everyone:** the shared email budget (Supabase → Authentication → Rate Limits) is used up. Raise it, and make sure the CAPTCHA (step 1.9) is on.
+- **"Invite emails are paused for today":** more than 500 invite emails went out in 24 hours (you'll get an email about it). It resumes by itself; people can still copy invite links.

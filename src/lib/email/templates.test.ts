@@ -1,20 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { escapeHtml, inviteEmail, passReceiptEmail, reminderEmail, welcomeEmail } from "./templates";
-import { unsubscribeUrl, verifyUnsubscribe } from "./unsubscribe";
+import { oneLine } from "../validation";
+import { escapeHtml, inviteEmail, passReceiptEmail, plainName, reminderEmail, welcomeEmail } from "./templates";
+import { oneClickUnsubscribeUrl, unsubscribeUrl, verifyUnsubscribe } from "./unsubscribe";
 
 describe("emails", () => {
   it("escape anything people typed", () => {
     expect(escapeHtml(`<script>"x"&'y'</script>`)).toBe("&lt;script&gt;&quot;x&quot;&amp;&#39;y&#39;&lt;/script&gt;");
-    const mail = inviteEmail({ inviterName: "<b>Eve</b>", listName: "Holidays & more", inviteUrl: "https://g.app/join/abc" });
+    const mail = welcomeEmail({ name: "<b>Eve</b>", appUrl: "https://g.app" });
     expect(mail.html).toContain("&lt;b&gt;Eve&lt;/b&gt;");
     expect(mail.html).not.toContain("<b>Eve</b>");
-    expect(mail.subject).toContain("GiftLedger");
+  });
+
+  it("invites carry no text a stranger chose, apart from a plain first name", () => {
+    const phishing = inviteEmail({ inviterName: "PayPal: verify at evil.example", inviteUrl: "https://g.app/join/abc" });
+    expect(phishing.subject).toBe("You're invited to a family gift list on GiftLedger");
+    expect(phishing.html + phishing.text).not.toMatch(/PayPal|evil/);
+    expect(phishing.text).toContain("A family member invited you");
+    const real = inviteEmail({ inviterName: "Mary-Jane O'Neil", inviteUrl: "https://g.app/join/abc" });
+    expect(real.subject).toBe(phishing.subject);
+    expect(real.text).toContain("Mary-Jane O'Neil invited you");
+    expect(plainName("José")).toBe("José");
+    for (const bad of ["Claim $500 gift card", "evil.example", "a\r\nBcc: x", "Visit http://x", "", "x".repeat(41)]) {
+      expect(plainName(bad), bad).toBeNull();
+    }
+  });
+
+  it("subjects are always one line", () => {
+    expect(oneLine("GiftLedger: last day to return Scarf\r\nBcc: victim@evil.test\u2028x")).toBe(
+      "GiftLedger: last day to return Scarf Bcc: victim@evil.test x",
+    );
   });
 
   it("every email names the app in the subject", () => {
     for (const mail of [
       welcomeEmail({ name: "Maria", appUrl: "https://g.app" }),
-      inviteEmail({ inviterName: "Maria", listName: "Holidays 2026", inviteUrl: "https://g.app/join/x" }),
+      inviteEmail({ inviterName: "Maria", inviteUrl: "https://g.app/join/x" }),
       passReceiptEmail({ name: "Maria", amountCents: 999, appUrl: "https://g.app" }),
     ]) {
       expect(mail.subject).toContain("GiftLedger");
@@ -57,5 +77,13 @@ describe("unsubscribe links", () => {
     expect(verifyUnsubscribe(id, sig, "another-secret-123")).toBe(false);
     expect(verifyUnsubscribe("6f1c2a7e-3b4d-4c5e-8f9a-0b1c2d3e4f5b", sig, "secret-one-1234567")).toBe(false);
     expect(verifyUnsubscribe(id, "", "secret-one-1234567")).toBe(false);
+  });
+
+  it("email apps' own unsubscribe button posts to the endpoint that does the work", () => {
+    const page = new URL(unsubscribeUrl("https://g.app", id, "secret-one-1234567"));
+    const oneClick = new URL(oneClickUnsubscribeUrl("https://g.app", id, "secret-one-1234567"));
+    expect(page.pathname).toBe("/unsubscribe");
+    expect(oneClick.pathname).toBe("/api/unsubscribe");
+    expect(oneClick.search).toBe(page.search);
   });
 });

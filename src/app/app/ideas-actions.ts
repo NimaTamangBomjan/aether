@@ -7,6 +7,7 @@ import { buildProfile, scrubTitles, type Idea } from "@/lib/ai/ideas";
 import { spentCents } from "@/lib/budget";
 import { getListContext } from "@/lib/data/list";
 import { dollarsToCents } from "@/lib/money";
+import { oneLine } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { trackServer } from "@/lib/analytics-server";
 
@@ -152,7 +153,7 @@ async function getUsage(ctx: Awaited<ReturnType<typeof getListContext>>): Promis
 
 const saveSchema = z.object({
   recipientId: z.uuid(),
-  title: z.string().trim().min(1).max(120),
+  title: z.string().transform(oneLine).pipe(z.string().min(1).max(120)),
   priceUsd: z.number().nonnegative().max(100_000),
   why: z.string().max(400).default(""),
 });

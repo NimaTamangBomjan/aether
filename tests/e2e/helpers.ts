@@ -1,10 +1,44 @@
-import { expect, type Page, test as base } from "@playwright/test";
+import { expect, type Browser, type BrowserContext, type BrowserContextOptions, type Page, test as base } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 const MAILPIT = process.env.LOCAL_MAILPIT_URL ?? "http://127.0.0.1:54324";
 
+// Browser tests run with the "are you a person?" check switched on (NEXT_PUBLIC_TURNSTILE_SITE_KEY),
+// like production. Cloudflare isn't contacted: this stand-in passes every check with a numbered,
+// one-time token.
+const CAPTCHA_STUB = `(() => {
+  let n = 0;
+  const widgets = {};
+  const pass = (id) => setTimeout(() => widgets[id] && widgets[id].callback("stub-captcha-token-" + ++n), 30);
+  window.turnstile = {
+    render(el, opts) { const id = "w" + Object.keys(widgets).length; widgets[id] = opts; pass(id); return id; },
+    reset(id) { pass(id); },
+    remove(id) { delete widgets[id]; },
+  };
+})();`;
+
+export async function stubCaptcha(context: BrowserContext) {
+  await context.route("https://challenges.cloudflare.com/**", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: CAPTCHA_STUB }),
+  );
+}
+
+/** A second, separate browser (another person), with the same stand-ins as the main one. */
+export async function newBrowserContext(browser: Browser, options?: BrowserContextOptions) {
+  const context = await browser.newContext(options);
+  await stubCaptcha(context);
+  return context;
+}
+
 /** Fails the test if the page logs any console error or warning, or throws. */
-export const test = base.extend<{ consoleProblems: string[] }>({
+export const test = base.extend<{ consoleProblems: string[]; captchaStub: void }>({
+  captchaStub: [
+    async ({ context }, use) => {
+      await stubCaptcha(context);
+      await use();
+    },
+    { auto: true },
+  ],
   consoleProblems: [
     async ({ page }, use) => {
       const problems: string[] = [];

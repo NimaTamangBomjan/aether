@@ -32,6 +32,14 @@ export default function PrivacyPage() {
           <strong>Usage and errors:</strong> how many AI idea requests you&apos;ve used, basic usage statistics without
           cookies, and error reports that help us fix bugs.
         </li>
+        <li>
+          <strong>Sign-in records:</strong> when you signed in, kept for 30 days for security. If you start signing up
+          but never enter the code, that unfinished account is deleted after a day.
+        </li>
+        <li>
+          <strong>Invites you email:</strong> we use the address only to send that one invite. To stop people being
+          emailed again and again, we keep a one-way fingerprint of it (not the address) for 30 days.
+        </li>
       </ul>
 
       <h2>How we use it</h2>
@@ -61,6 +69,7 @@ export default function PrivacyPage() {
         <li>Resend (email)</li>
         <li>PostHog (usage statistics, without cookies)</li>
         <li>Sentry (error reports)</li>
+        <li>Cloudflare (checks that sign-ins come from a person, not a bot)</li>
       </ul>
       <p>We may also share information if the law requires it, or to protect people&apos;s safety.</p>
 
@@ -73,8 +82,10 @@ export default function PrivacyPage() {
       <h2>How long we keep it</h2>
       <p>
         We keep your information while you have an account. When you delete your account, we delete your personal
-        information. We keep basic payment records (amount and date, without your name) because tax law requires it.
-        Backups are deleted on a rolling basis within 30 days.
+        information from GiftLedger, including your sign-in records. We keep basic payment records (amount and date,
+        without your name) because tax law requires it. Backups are deleted on a rolling basis within 30 days. The
+        companies that help us run GiftLedger keep their own short-term records (for example email delivery logs and
+        error reports) and delete them on their own schedules; Stripe keeps payment records as the law requires.
       </p>
 
       <h2>Your choices</h2>

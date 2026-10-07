@@ -30,6 +30,11 @@ const optionalDate = (label: string) =>
       return value;
     });
 
+// Line breaks and other invisible control characters (pasted text can carry them) become spaces in
+// one-line fields like names and titles. They're refused by the database too.
+const CONTROL_CHARS = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]+/g;
+export const oneLine = (v: string) => v.replace(CONTROL_CHARS, " ").trim();
+
 const text = (max: number, label: string) =>
   z
     .string()
@@ -37,8 +42,15 @@ const text = (max: number, label: string) =>
     .transform((v) => (v ?? "").trim())
     .pipe(z.string().max(max, `${label} can be up to ${max} characters.`));
 
+const lineText = (max: number, label: string) =>
+  z
+    .string()
+    .optional()
+    .transform((v) => oneLine(v ?? ""))
+    .pipe(z.string().max(max, `${label} can be up to ${max} characters.`));
+
 export const recipientInput = z.object({
-  name: z.string().trim().min(1, "Add a name.").max(80, "Names can be up to 80 characters."),
+  name: z.string().transform(oneLine).pipe(z.string().min(1, "Add a name.").max(80, "Names can be up to 80 characters.")),
   relationship: text(40, "Relationship"),
   budget: optionalMoney("Budget"),
   age_range: z
@@ -66,7 +78,10 @@ export const recipientInput = z.object({
 export type RecipientInput = z.infer<typeof recipientInput>;
 
 export const giftInput = z.object({
-  title: z.string().trim().min(1, "Add what the gift is.").max(120, "Keep the title under 120 characters."),
+  title: z
+    .string()
+    .transform(oneLine)
+    .pipe(z.string().min(1, "Add what the gift is.").max(120, "Keep the title under 120 characters.")),
   link: z
     .string()
     .optional()
@@ -83,7 +98,7 @@ export const giftInput = z.object({
   price: optionalMoney("Price"),
   quantity: z.coerce.number().int().min(1, "Quantity is at least 1.").max(99, "Quantity can be up to 99.").default(1),
   status: z.enum(Constants.public.Enums.gift_status).default("idea"),
-  store: text(80, "Store").transform((v) => (v === "" ? null : v)),
+  store: lineText(80, "Store").transform((v) => (v === "" ? null : v)),
   purchase_date: optionalDate("Purchase date"),
   return_by: optionalDate("Return-by date"),
   notes: text(1000, "Notes"),
@@ -100,6 +115,18 @@ export const quickGiftInput = z.object({
 });
 
 export const budgetInput = z.object({ budget: optionalMoney("Budget") });
+
+/** The name family members see. No web or email addresses: it's shown to people being invited. */
+export const displayNameInput = z
+  .string()
+  .transform(oneLine)
+  .pipe(
+    z
+      .string()
+      .min(1, "Add the name your family sees.")
+      .max(60, "Names can be up to 60 characters.")
+      .refine((v) => !/:\/\/|www\.|@/i.test(v), "Names can't include web or email addresses."),
+  );
 
 export function formToObject(formData: FormData): Record<string, string> {
   const out: Record<string, string> = {};

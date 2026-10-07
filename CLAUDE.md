@@ -229,7 +229,7 @@ Sessions will end and context will run out. To keep going smoothly:
 
 Money is stored in cents as whole numbers, never as decimals.
 
-The implemented schema (with the approved changes: no `is_paid`, owner stored as a `list_members` role, `linked_user_id` on recipients, hashed invite tokens, `stripe_events`, a status on `reminder_log`) lives in `supabase/migrations/`.
+The implemented schema (with the approved changes: no `is_paid`, owner stored as a `list_members` role, `linked_user_id` on recipients, hashed invite tokens, `stripe_events`, a status on `reminder_log`, and `invite_emails` (one-way fingerprints of emailed invite addresses, for anti-spam limits)) lives in `supabase/migrations/`.
 
 ## 18. Environment variables
 Document each one in `.env.example` with where to find it:

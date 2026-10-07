@@ -6,12 +6,13 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ACTIVE_LIST_COOKIE, getListContext } from "@/lib/data/list";
 import { isValidTimeZone } from "@/lib/dates";
+import { displayNameInput } from "@/lib/validation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { FormState } from "@/app/app/actions";
 import { trackServer } from "@/lib/analytics-server";
 
 const settingsSchema = z.object({
-  display_name: z.string().trim().min(1, "Add the name your family sees.").max(60, "Names can be up to 60 characters."),
+  display_name: displayNameInput,
   time_zone: z.string().refine(isValidTimeZone, "Choose a time zone from the list."),
   email_reminders: z.literal("on").optional(),
 });

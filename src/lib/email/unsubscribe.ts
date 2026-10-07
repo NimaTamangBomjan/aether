@@ -5,8 +5,14 @@ export function unsubscribeSignature(userId: string, secret: string): string {
   return createHmac("sha256", secret).update(`unsubscribe:${userId}`).digest("base64url");
 }
 
+/** The link in the email body: a page with an "Unsubscribe" button. */
 export function unsubscribeUrl(appUrl: string, userId: string, secret: string): string {
   return `${appUrl}/unsubscribe?u=${encodeURIComponent(userId)}&s=${unsubscribeSignature(userId, secret)}`;
+}
+
+/** The address email apps call for their own "Unsubscribe" button (RFC 8058 one-click POST). */
+export function oneClickUnsubscribeUrl(appUrl: string, userId: string, secret: string): string {
+  return `${appUrl}/api/unsubscribe?u=${encodeURIComponent(userId)}&s=${unsubscribeSignature(userId, secret)}`;
 }
 
 export function verifyUnsubscribe(userId: string, signature: string, secret: string): boolean {

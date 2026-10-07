@@ -1,8 +1,8 @@
-import { addPerson, adminClient, expect, newUserOnDashboard, quickAddGift, signInWithCode, test } from "./helpers";
+import { addPerson, adminClient, expect, newBrowserContext, newUserOnDashboard, quickAddGift, signInWithCode, test } from "./helpers";
 import type { Browser } from "@playwright/test";
 
 async function joinFromLink(browser: Browser, url: string, label: string) {
-  const context = await browser.newContext({ timezoneId: "America/New_York" });
+  const context = await newBrowserContext(browser, { timezoneId: "America/New_York" });
   const page = await context.newPage();
   const email = `${label}-${Math.random().toString(36).slice(2, 10)}@test.giftledger.local`;
   await signInWithCode(page, email, `/sign-in?next=${encodeURIComponent(new URL(url).pathname)}`);
@@ -28,6 +28,11 @@ test("settings: name, time zone and reminder emails are saved", async ({ page })
   await page.getByLabel("Your name").fill("");
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Add the name your family sees.")).toBeVisible();
+
+  // Family members and invited people see this name, so it can't hold a web address.
+  await page.getByLabel("Your name").fill("Claim your prize at www.evil.example");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Names can't include web or email addresses.")).toBeVisible();
 });
 
 test("export gives a CSV of what you can see, never a gift hidden from you", async ({ page, browser }) => {

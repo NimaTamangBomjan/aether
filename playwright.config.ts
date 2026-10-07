@@ -72,6 +72,8 @@ export default defineConfig({
         NEXT_PUBLIC_POSTHOG_KEY: "phc_test_not_real",
         NEXT_PUBLIC_POSTHOG_HOST: `http://127.0.0.1:${FAKE_POSTHOG_PORT}`,
         NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}`,
+        // The "are you a person?" check is on, as in production; tests/e2e/helpers.ts stands in for Cloudflare.
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: "test-site-key-not-real",
       },
     },
   ],

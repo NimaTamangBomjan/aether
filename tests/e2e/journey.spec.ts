@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { randomUUID } from "node:crypto";
 import { addDays, formatDate, todayInTimeZone } from "../../src/lib/dates";
-import { expect, signInWithCode, test, uniqueEmail, userIdFor } from "./helpers";
+import { expect, newBrowserContext, signInWithCode, test, uniqueEmail, userIdFor } from "./helpers";
 
 // The launch checklist journey (CLAUDE.md §12):
 // sign up → add person → AI ideas → save gift → invite family member → upgrade → reminder email sent.
@@ -54,7 +54,7 @@ test("the whole journey works end to end", async ({ page, browser, baseURL }) =>
   await page.goto("/app/family");
   await page.getByRole("button", { name: "Create invite link" }).click();
   const invite = new URL(await page.getByLabel("Send this link to one person").inputValue());
-  const familyContext = await browser.newContext({ timezoneId: "America/New_York" });
+  const familyContext = await newBrowserContext(browser, { timezoneId: "America/New_York" });
   const alex = await familyContext.newPage();
   await signInWithCode(alex, uniqueEmail("journey-alex"), `/sign-in?next=${encodeURIComponent(invite.pathname)}`);
   await alex.getByLabel("Your name").fill("Alex");

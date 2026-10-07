@@ -29,6 +29,8 @@ export async function createTestUser(label: string): Promise<TestUser> {
     user_metadata: { full_name: label },
   });
   if (error || !data.user) throw error ?? new Error("createUser failed");
+  // New accounts are named after their email address; tests use the label as the name.
+  await admin.from("profiles").update({ display_name: label }).eq("id", data.user.id);
 
   const client = anon();
   const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email });

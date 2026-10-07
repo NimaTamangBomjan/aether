@@ -230,7 +230,8 @@ double_confirm_changes = true
 # Must stay on, here and in production (see 20261014000000_security_review_1.sql, H1).
 enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
-secure_password_change = false
+# GiftLedger has no passwords; any password set is scrambled anyway (20261015000000_security_review_2.sql, M1).
+secure_password_change = true
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
 # Number of characters used in the email OTP.
@@ -257,6 +258,16 @@ content_path = "./supabase/templates/sign-in.html"
 [auth.email.template.confirmation]
 subject = "Your GiftLedger sign-in code: {{ .Token }}"
 content_path = "./supabase/templates/sign-in.html"
+
+# Email changes are refused by the database and there are no passwords, but Supabase sends these
+# emails before it checks, so they carry no links: nobody can use them for phishing.
+[auth.email.template.email_change]
+subject = "GiftLedger: no change was made"
+content_path = "./supabase/templates/email-change.html"
+
+[auth.email.template.recovery]
+subject = "GiftLedger doesn't use passwords"
+content_path = "./supabase/templates/password-reset.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]

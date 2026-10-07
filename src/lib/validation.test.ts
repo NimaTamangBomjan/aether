@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fieldErrors, giftInput, recipientInput } from "./validation";
+import { displayNameInput, fieldErrors, giftInput, recipientInput } from "./validation";
 
 describe("person form", () => {
   it("accepts a typical person and cleans it up", () => {
@@ -84,5 +84,24 @@ describe("gift form", () => {
   it("defaults to one idea with no link", () => {
     const g = giftInput.parse({ title: "Socks" });
     expect(g).toMatchObject({ quantity: 1, status: "idea", link: null, price: null, store: null });
+  });
+});
+
+describe("one-line fields and display names", () => {
+  it("turn pasted line breaks and control characters into spaces", () => {
+    const person = recipientInput.parse({ name: "Grandma\r\nBcc: x@evil.test" });
+    expect(person.name).toBe("Grandma Bcc: x@evil.test");
+    const gift = giftInput.parse({ title: "Scarf \tblue", store: "Target\n" });
+    expect(gift.title).toBe("Scarf blue");
+    expect(gift.store).toBe("Target");
+    expect(giftInput.safeParse({ title: "\r\n" }).success).toBe(false);
+  });
+
+  it("names family members see can't hold web or email addresses", () => {
+    expect(displayNameInput.parse("  Maria  ")).toBe("Maria");
+    expect(displayNameInput.parse("jane.doe")).toBe("jane.doe");
+    for (const bad of ["Visit https://evil.example", "www.evil.example", "me@evil.example", "", "x".repeat(61)]) {
+      expect(displayNameInput.safeParse(bad).success, bad).toBe(false);
+    }
   });
 });

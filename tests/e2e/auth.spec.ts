@@ -1,4 +1,4 @@
-import { codeFrom, emailCount, expect, latestEmail, linkFrom, signInWithCode, test, uniqueEmail } from "./helpers";
+import { codeFrom, emailCount, expect, latestEmail, linkFrom, newBrowserContext, signInWithCode, test, uniqueEmail } from "./helpers";
 
 test("a signed-out visitor opening a private page is sent to sign in", async ({ page }) => {
   await page.goto("/app");
@@ -22,12 +22,33 @@ test("the email link works even in a different browser", async ({ page, browser 
   await expect(page.getByLabel("6-digit code")).toBeVisible();
   const link = linkFrom(await latestEmail(email, before));
 
-  const otherBrowser = await browser.newContext();
+  const otherBrowser = await newBrowserContext(browser);
   const other = await otherBrowser.newPage();
   await other.goto(link);
   await expect(other).toHaveURL(/\/app\/welcome$/);
   await expect(other.getByRole("heading", { name: /^Welcome/ })).toBeVisible();
   await otherBrowser.close();
+});
+
+test("every code request carries a fresh one-time 'are you a person?' token", async ({ page }) => {
+  const tokens: string[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().includes("/auth/v1/otp")) {
+      const body = request.postDataJSON() as { gotrue_meta_security?: { captcha_token?: string } };
+      tokens.push(body.gotrue_meta_security?.captcha_token ?? "missing");
+    }
+  });
+  await page.goto("/sign-in");
+  await page.getByLabel("Your email").fill(uniqueEmail("captcha"));
+  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
+  await expect(page.getByLabel("6-digit code")).toBeVisible();
+  // Supabase allows one code email per address per second.
+  await page.waitForTimeout(1500);
+  await page.getByRole("button", { name: "Send a new code" }).click();
+  await expect.poll(() => tokens.length).toBe(2);
+  expect(tokens[0]).toMatch(/^stub-captcha-token-\d+$/);
+  expect(tokens[1]).toMatch(/^stub-captcha-token-\d+$/);
+  expect(tokens[1]).not.toBe(tokens[0]);
 });
 
 test("a used or broken link explains what to do", async ({ page }) => {

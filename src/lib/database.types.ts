@@ -186,6 +186,36 @@ export type Database = {
           },
         ];
       };
+      invite_emails: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          email_hash: string;
+          id: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          email_hash: string;
+          id?: never;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          email_hash?: string;
+          id?: never;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invite_emails_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invites: {
         Row: {
           created_at: string;
@@ -527,6 +557,14 @@ export type Database = {
         Args: { p_gift_ids: string[]; p_local_date: string; p_user: string };
         Returns: boolean;
       };
+      daily_cleanup: {
+        Args: { p_now?: string };
+        Returns: {
+          auth_log_rows: number;
+          invite_email_rows: number;
+          unconfirmed_users: number;
+        }[];
+      };
       due_reminders: {
         Args: { p_now?: string };
         Returns: {
@@ -603,6 +641,7 @@ export type Database = {
         };
         Returns: string;
       };
+      reserve_invite_email: { Args: { p_email_hash: string; p_user: string }; Returns: undefined };
       set_gift_status: {
         Args: { p_gift: string; p_status: Database["public"]["Enums"]["gift_status"] };
         Returns: undefined;

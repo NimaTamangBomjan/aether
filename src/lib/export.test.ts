@@ -28,6 +28,8 @@ describe("CSV cells", () => {
     expect(csvCell("=HYPERLINK(\"http://evil\")")).toBe("\"'=HYPERLINK(\"\"http://evil\"\")\"");
     expect(csvCell("+1 555")).toBe("'+1 555");
     expect(csvCell("@sum")).toBe("'@sum");
+    expect(csvCell(" =1+1")).toBe("' =1+1");
+    expect(csvCell("\n=2+2")).toBe("\"'\n=2+2\"");
   });
 });
 

@@ -6,18 +6,21 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ACTIVE_LIST_COOKIE, getListContext } from "@/lib/data/list";
 import { env } from "@/lib/env";
-import { newInviteToken } from "@/lib/invite-token";
+import { hashInviteEmail, newInviteToken } from "@/lib/invite-token";
 import { FREE_MEMBER_LIMIT } from "@/lib/types";
 import { emailConfigured, sendEmail } from "@/lib/email/send";
-import { inviteEmail } from "@/lib/email/templates";
+import { inviteEmail, invitesPausedEmail } from "@/lib/email/templates";
+import { serverEnv } from "@/lib/server-env";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { trackServer } from "@/lib/analytics-server";
 
 const uuid = z.uuid();
 
 export type InviteResult = { ok: true; url: string } | { ok: false; message: string; code?: "limit" };
 
-export async function createInviteLink(): Promise<InviteResult> {
-  const ctx = await getListContext();
+type ListContext = Awaited<ReturnType<typeof getListContext>>;
+
+function cannotInvite(ctx: ListContext): Extract<InviteResult, { ok: false }> | null {
   if (!ctx.isOwner) return { ok: false, message: "Only the list owner can invite people." };
   if (!ctx.hasPass && ctx.memberCount >= FREE_MEMBER_LIMIT) {
     return {
@@ -26,6 +29,13 @@ export async function createInviteLink(): Promise<InviteResult> {
       message: "Your free plan includes 1 family member. Unlock unlimited family members for $9.99.",
     };
   }
+  return null;
+}
+
+export async function createInviteLink(): Promise<InviteResult> {
+  const ctx = await getListContext();
+  const refused = cannotInvite(ctx);
+  if (refused) return refused;
   const { token, hash } = newInviteToken();
   const { error } = await ctx.supabase
     .from("invites")
@@ -99,18 +109,48 @@ export async function switchList(formData: FormData) {
   redirect("/app");
 }
 
-/** Creates a fresh single-use link and emails it. The address is only used for this one email. */
+const EMAIL_INVITE_REFUSALS: Record<string, string> = {
+  INVITE_EMAIL_DUPLICATE: "An invite was already emailed to this address. Copy the link and send it yourself instead.",
+  INVITE_EMAIL_LIMIT: "You've emailed all the invites you can today. Copy the link and send it yourself instead.",
+  INVITE_EMAIL_PAUSED: "Invite emails are paused for today. Copy the link and send it yourself instead.",
+};
+
+/**
+ * Creates a fresh single-use link and emails it. The address is only used for this one email;
+ * a one-way fingerprint of it is kept for 30 days so nobody can email the same person twice.
+ * Each account can email 3 invites a day (10 with the Season Pass).
+ */
 export async function emailInvite(email: string): Promise<{ ok: true } | { ok: false; message: string; code?: "limit" }> {
   const parsed = z.email().safeParse(email.trim().toLowerCase());
   if (!parsed.success) return { ok: false, message: "Please enter a valid email address." };
   if (!emailConfigured()) return { ok: false, message: "Sending invites by email isn't switched on yet. Copy the link instead." };
+  const ctx = await getListContext();
+  const refused = cannotInvite(ctx);
+  if (refused) return refused;
+
+  const { error: reserveError } = await createAdminClient().rpc("reserve_invite_email", {
+    p_user: ctx.userId,
+    p_email_hash: hashInviteEmail(parsed.data),
+  });
+  if (reserveError) {
+    const code = Object.keys(EMAIL_INVITE_REFUSALS).find((c) => reserveError.message.includes(c));
+    if (code === "INVITE_EMAIL_PAUSED") await alertOwnerInvitesPaused();
+    return { ok: false, message: code ? EMAIL_INVITE_REFUSALS[code] : "Couldn't send the email. Copy the link instead." };
+  }
+
   const created = await createInviteLink();
   if (!created.ok) return created;
-  const ctx = await getListContext();
-  const sent = await sendEmail(
-    parsed.data,
-    inviteEmail({ inviterName: ctx.profile.display_name, listName: ctx.list.name, inviteUrl: created.url }),
-    { tag: "invite" },
-  );
+  const sent = await sendEmail(parsed.data, inviteEmail({ inviterName: ctx.profile.display_name, inviteUrl: created.url }), {
+    tag: "invite",
+  });
   return sent ? { ok: true } : { ok: false, message: "Couldn't send the email. Copy the link instead." };
+}
+
+async function alertOwnerInvitesPaused() {
+  const adminEmail = serverEnv().ADMIN_EMAIL;
+  if (!adminEmail) return;
+  await sendEmail(adminEmail, invitesPausedEmail(), {
+    tag: "invites-paused",
+    idempotencyKey: `invites-paused-${new Date().toISOString().slice(0, 10)}`,
+  });
 }

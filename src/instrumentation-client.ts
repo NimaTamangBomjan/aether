@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { scrubSentryEvent } from "@/lib/sentry-scrub";
+import { scrubBreadcrumb, scrubSentryEvent } from "@/lib/sentry-scrub";
 
 // Browser error reporting with Sentry. Does nothing until NEXT_PUBLIC_SENTRY_DSN is set.
 const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
@@ -8,6 +8,7 @@ if (dsn) {
     dsn,
     tracesSampleRate: 0,
     beforeSend: scrubSentryEvent,
+    beforeBreadcrumb: scrubBreadcrumb,
   });
 }
 

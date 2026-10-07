@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ACTIVE_LIST_COOKIE } from "@/lib/data/list";
 import { isInviteTokenFormat } from "@/lib/invite-token";
+import { displayNameInput } from "@/lib/validation";
 import { requireUser } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email/send";
@@ -13,6 +14,8 @@ import { trackServer } from "@/lib/analytics-server";
 export async function joinList(token: string, displayName?: string): Promise<{ error: string } | void> {
   const { supabase, userId, email } = await requireUser(`/join/${token}`);
   if (!isInviteTokenFormat(token)) return { error: "This invite link isn't complete. Ask for a new one." };
+  const name = displayName?.trim() ? displayNameInput.safeParse(displayName) : null;
+  if (name && !name.success) return { error: name.error.issues[0].message };
 
   const { data: listId, error } = await supabase.rpc("accept_invite", { p_token: token });
   if (error || !listId) {
@@ -31,8 +34,7 @@ export async function joinList(token: string, displayName?: string): Promise<{ e
   });
   trackServer(userId, "family_joined");
   // The name family members see next to "Marked bought by…".
-  const name = displayName?.trim().slice(0, 60);
-  if (name) await supabase.from("profiles").update({ display_name: name }).eq("id", userId);
+  if (name?.success) await supabase.from("profiles").update({ display_name: name.data }).eq("id", userId);
   // People who join someone's list skip the setup steps for a new list.
   const { data: firstTime } = await supabase
     .from("profiles")
