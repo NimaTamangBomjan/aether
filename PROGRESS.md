@@ -33,6 +33,43 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 
 ---
 
+## Launch checklist (CLAUDE.md §12) and acceptance criteria
+
+**Acceptance criteria**
+
+| § | Criterion | Status |
+|---|---|---|
+| 6.1 | A new user reaches their first AI idea in under 2 minutes | ✅ tested (about 3 seconds against the AI stand-in; the real AI adds ~3–6 s) |
+| 6.2 | Totals update immediately when a gift's price or status changes; colors; sorting | ✅ tested |
+| 6.3 | Free users blocked at the 6th person on the server | ✅ database-enforced and tested |
+| 6.4 | Spent counts only Bought, Wrapped and Given; 30-day return-by suggestion | ✅ tested |
+| 6.5 | A failed or slow AI call shows a friendly message and doesn't use up a request | ✅ tested. ⏳ Real-AI quality check on 10 profiles needs the key (`npm run test:ai-live`) |
+| 6.6 | A hidden gift never shows up for that member in any page, API response or email | ✅ tested: pages, page source, direct links, REST/RPC, export, reminder emails |
+| 6.7 | Running the reminder job twice the same day sends nothing extra | ✅ tested |
+| 6.8 | Stripe test cards, including a declined card | ⏳ Webhook logic fully tested with Stripe-signed events. Real Checkout with test cards: `tests/e2e/stripe-live.spec.ts`, ready once Stripe test keys and domains are added |
+| 6.9 | Settings, export, account deletion | ✅ tested |
+| 6.10 | Landing page sections, SEO, Lighthouse 90+ mobile | ✅ 97–98 performance, 100 accessibility/best practices/SEO. ⏳ Headline choice (owner) |
+| 6.11 | Legal pages linked, under-13 statement, minimal cookies, contact email | ✅ drafts. ⏳ Owner review, and `NEXT_PUBLIC_SUPPORT_EMAIL` |
+
+**Definition of done (§12)**
+
+| Item | Status |
+|---|---|
+| Playwright: sign up → person → AI ideas → save gift → invite → upgrade → reminder email | ✅ `tests/e2e/journey.spec.ts` passes at phone and desktop sizes. The payment step uses Stripe's signed webhook; the real Checkout test runs once keys exist |
+| Stripe live mode; one real $9.99 purchase tested and refunded | ⏳ Owner, with Claude (deferred by the owner: no card use by Claude) |
+| Custom domain with HTTPS; sending domain verified (SPF/DKIM) | ⏳ Owner buys the domain; steps in README |
+| Privacy Policy and Terms reviewed | ⏳ Owner |
+| Sentry and PostHog receiving data | ⏳ Needs keys (code ready and tested against stand-ins) |
+| README explains setup, deploying and every key | ✅ `README.md` |
+
+**After launch (§20)**
+- "Send feedback" link: ✅ in Settings (needs `NEXT_PUBLIC_SUPPORT_EMAIL`).
+- Daily Supabase backups: ⏳ Supabase Pro (owner).
+- Sentry alerts to email: ⏳ owner setting (README step 7).
+- `LAUNCH.md`: ✅
+
+---
+
 ## Stage 9: Analytics and error tracking ✅ (Oct 7). Live data waits for PostHog + Sentry keys
 
 **Done**

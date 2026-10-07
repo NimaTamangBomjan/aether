@@ -70,3 +70,11 @@ test("tap targets on the sign-in screen are at least 44px tall", async ({ page }
     expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
   }
 });
+
+test("Google sign-in stays hidden until it's set up, and a failed return explains itself", async ({ page }) => {
+  await page.goto("/sign-in");
+  await expect(page.getByRole("button", { name: "Continue with Google" })).toHaveCount(0);
+  await page.goto("/auth/callback?next=/app");
+  await expect(page).toHaveURL(/\/sign-in\?error=google/);
+  await expect(page.getByRole("alert").filter({ hasText: "Google sign-in didn't finish." })).toBeVisible();
+});

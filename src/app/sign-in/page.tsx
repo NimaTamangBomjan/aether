@@ -18,7 +18,12 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
         GiftLedger
       </Link>
       <h1 className="mb-2 text-2xl font-bold">Sign in or create your account</h1>
-      <p className="mb-6 text-muted-foreground">No password needed. We&apos;ll email you a code.</p>
+      <p className="mb-6 text-muted-foreground">No password needed.</p>
+      {params.error === "google" && (
+        <p role="alert" className="mb-4 text-sm text-over-foreground">
+          Google sign-in didn&apos;t finish. Try again, or use your email.
+        </p>
+      )}
       <SignInForm next={next} linkError={params.error === "link"} />
     </main>
   );

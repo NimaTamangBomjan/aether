@@ -5,6 +5,7 @@ import { signOut } from "@/app/sign-in/actions";
 import { Button } from "@/components/ui/button";
 import { getListContext } from "@/lib/data/list";
 import { hasActivePass, SEASON_PASS_THROUGH } from "@/lib/season";
+import { SUPPORT_EMAIL } from "@/lib/site";
 import { DeleteAccount, SettingsForm } from "./settings-forms";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -95,6 +96,18 @@ export default async function SettingsPage() {
           </a>
         </Button>
       </section>
+
+      {SUPPORT_EMAIL && (
+        <section aria-labelledby="feedback-heading" className="space-y-3">
+          <h2 id="feedback-heading" className="text-lg font-bold">
+            Feedback
+          </h2>
+          <p className="text-sm text-muted-foreground">Something confusing, broken, or missing? We read every message.</p>
+          <Button asChild variant="outline" className="w-full">
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("GiftLedger feedback")}`}>Send feedback</a>
+          </Button>
+        </section>
+      )}
 
       <section className="space-y-3">
         <form action={signOut}>
