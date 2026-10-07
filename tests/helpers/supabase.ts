@@ -1,0 +1,72 @@
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { randomBytes, createHash, randomUUID } from "node:crypto";
+
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+if (!url || !anonKey || !serviceKey) {
+  throw new Error("Local Supabase env missing. Run `npm run db:start` then `npm run env:local`.");
+}
+
+const noPersist = { auth: { persistSession: false, autoRefreshToken: false } };
+
+export const admin = createClient(url, serviceKey, noPersist);
+export const anon = (): SupabaseClient => createClient(url, anonKey, noPersist);
+
+export type TestUser = { id: string; email: string; client: SupabaseClient; listId: string };
+
+/** Creates a confirmed user and returns a client signed in as them, plus their own list id. */
+export async function createTestUser(label: string): Promise<TestUser> {
+  const email = `${label}-${randomUUID().slice(0, 8)}@test.giftledger.local`;
+  const password = randomBytes(16).toString("hex");
+  const { data, error } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { full_name: label },
+  });
+  if (error || !data.user) throw error ?? new Error("createUser failed");
+
+  const client = anon();
+  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  if (signInError) throw signInError;
+
+  const { data: membership, error: listError } = await client
+    .from("list_members")
+    .select("list_id")
+    .eq("user_id", data.user.id)
+    .eq("role", "owner")
+    .single();
+  if (listError) throw listError;
+
+  return { id: data.user.id, email, client, listId: membership.list_id };
+}
+
+export async function deleteTestUser(user: TestUser | undefined) {
+  if (!user) return;
+  await admin.from("lists").delete().eq("id", user.listId);
+  await admin.auth.admin.deleteUser(user.id);
+}
+
+/** Creates an invite the way the app will: random token, only its hash stored. */
+export async function createInvite(owner: TestUser, opts: { expired?: boolean } = {}) {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const { error } = await owner.client.from("invites").insert({
+    list_id: owner.listId,
+    token_hash: tokenHash,
+    created_by: owner.id,
+    ...(opts.expired ? { expires_at: new Date(Date.now() - 1000).toISOString() } : {}),
+  });
+  if (error) throw error;
+  return token;
+}
+
+export async function givePass(user: TestUser) {
+  const { error } = await admin
+    .from("profiles")
+    .update({ paid_until: new Date(Date.now() + 86_400_000).toISOString() })
+    .eq("id", user.id);
+  if (error) throw error;
+}
