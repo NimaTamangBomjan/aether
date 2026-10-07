@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 3: AI gift ideas (next)
+- **Current stage:** 4: Family sharing (in progress)
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,69 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 4: Family sharing (in progress)
+
+**Plan**
+- `/app/family`:
+  - members, with remove (owner) and leave (member);
+  - create an invite link with copy and share buttons; it lasts 7 days and works once;
+  - pending invites, which can be cancelled;
+  - the free 1-member limit prompt;
+  - invite creation limited to 10 an hour.
+- `/join/[token]`: sign in, then join. Joining switches you to that list and skips onboarding. Expired, used and full links each get a friendly message.
+- A list switcher in the header for people on 2+ lists (stored in a cookie, checked against membership every time).
+- On the gift form:
+  - "Hide this gift from…" checkboxes;
+  - the activity line ("Marked bought by Alex, Nov 14") and "Bought by".
+- On the person form: "This person is on the list as…" links them to a member, so they never see their own gifts.
+- **Database:** no new tables. One small migration adds `create_invite()`, so the token hash and the per-hour limit are checked in one place.
+- **Risk:** a hidden gift leaking through any page. **Mitigation:** browser tests with an owner and a member in separate browsers, checking the page text and HTML.
+
+---
+
+## Stage 3: AI gift ideas ✅ (Oct 7). Real-AI prompt test waits for the key
+
+**Plan**
+- Prompt, privacy scrubbing and answer checks as pure tested code (`src/lib/ai/ideas.ts`).
+- The SDK call with a retry on malformed answers (`src/lib/ai/generate.ts`).
+- Request limits in the database (`20261009000000_stage3_ai.sql`).
+- Server actions (`src/app/app/ideas-actions.ts`) and the ideas screen.
+- A local stand-in for the AI service for browser tests.
+- **Risks:** can't call the real AI until the key arrives; leaking names; cost.
+
+**Done**
+- **"Get gift ideas"** on every person's page, and in onboarding step 3: sign-up → budget → first person → 5 ideas.
+- **What's sent:** only age range, relationship, interests, notes, don't-buy notes and the remaining budget. The person's name and every list member's name are replaced with "[name]", and emails, phone numbers and links are stripped. The notes field asks people not to include names.
+- **Model and format:** `claude-haiku-4-5`, server-side only, with output capped at 1,200 tokens. The answer is checked against a fixed format (Zod). The 5 ideas must:
+  - be exactly 5;
+  - be within the remaining budget;
+  - avoid the don't-buy list (singular forms too);
+  - contain no links.
+
+  If the answer breaks any of these, it asks once more; if it fails again, the request is free. Prompts and answers are never logged.
+- **Follow-ups:** "More like this" and "Different direction" each count as one request. "Save as gift idea" adds it as an Idea with the estimated price and the reason in its notes.
+- **No budget yet:** you're asked first ($25 / $50 / $100 / other). Owners save it on the person; members use it just for that request. A budget that's used up gets a friendly message and uses no request.
+- **Limits (enforced in the database, reserved by the server before calling the AI):**
+  - 10 successful requests per free list, 100 with a pass, shared by the family;
+  - 10 requests a minute per person;
+  - failed, slow or malformed answers don't count;
+  - the limit message offers the Season Pass.
+- **Timeouts:** one overall deadline per request (25 seconds) plus the SDK's single network retry. The ideas pages allow up to 60 seconds on Vercel.
+- **Cost logging:** tokens are logged per request and per user in `ai_requests`.
+
+**Checks (all run, all passing)**
+- Unit tests: +12 (name and email scrubbing, prompt contents, budget and don't-buy checks, link blocking, rounding).
+- Database tests: +7 (people can't reserve or finish requests themselves, only list members can use requests, failures are free, the family shares 10, finishing is one-time, the pass raises the cap to 100, 10 a minute).
+- Browser tests: +9 flows × phone + desktop, all against the AI stand-in (`tests/fake-ai/server.mjs`, which speaks the real API format):
+  - first idea during onboarding in under 2 minutes (it takes about 2 seconds);
+  - the request actually sent contains no names, uses the right model and the token cap;
+  - follow-ups;
+  - the budget question;
+  - server errors, slow answers, and malformed answers (retried once), with no request used on failure;
+  - the free cap reached, and the budget reached.
 
 ---
 
@@ -138,19 +201,23 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Native pickers on phones:** relationship, age range and status use the phone's own picker (fast and familiar) instead of a custom dropdown.
 - **Money input** accepts "25", "24.99", "$1,299.99" and is stored as whole cents.
 - **Gift edits by members:** members can edit and delete only gifts they added. Status can be changed by anyone who can see the gift.
+- **AI request pool is per list:** it belongs to the list owner's plan, as agreed. Members using "Get ideas" draw from the same pool.
+- **AI stand-in for tests only:** browser tests point the real SDK at `tests/fake-ai/server.mjs` through `ANTHROPIC_BASE_URL`. The app itself has no test-only code paths.
+- **`npm test`** runs unit and database tests. `npm run test:ai-live` is separate because it costs real money.
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Known issues
+- **Real AI not tested yet:** needs the Anthropic key. Once `APP_ANTHROPIC_API_KEY` is in the cloud environment, run `npm run env:local && npm run test:ai-live`. That's 10 sample profiles at about 5 cents in total; it checks every answer and prints the ideas for review. Structured output for `claude-haiku-4-5` is assumed to work; if the API rejects it, the fallback is to drop `output_config` (the Zod check stays).
+- **AI cost warning:** the "projected cost over $50/month" alert will be added to the daily cron in Stage 6. Usage is already logged per request.
 - `npm audit` reports 5 "high" issues, all in development-only lint tooling (`braces`, used by `eslint-config-next`), with no fixed version yet. `npm audit --omit=dev` (what ships to users) reports 0. Re-check before launch.
 - Terms and Privacy pages are placeholders until Stage 8.
 - Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
 
 ## Next step
-Stage 3, AI gift ideas:
-- server route with the Anthropic SDK and a Zod-checked 5-idea format, retrying once if the answer comes back malformed;
-- names scrubbed from notes;
-- free (10) and paid (100) limits per list, a 10-per-minute rate limit, and failures don't use up a request;
-- the ideas screen, "Save as gift idea", "More like this" and "Different direction";
-- wiring onboarding step 3.
-
-Real AI calls need the Anthropic key. Until it's added, everything is built and tested with the AI service swapped for a stand-in in tests only.
+Stage 4, family sharing:
+- invite links (create, copy/share, expire after 7 days, single use) and the join page;
+- a list switcher;
+- the members screen (remove, leave);
+- the per-gift "Hide from" setting and linking a person to a family member;
+- the activity line ("Marked bought by Alex, Nov 14");
+- tests that a hidden gift never appears for that member on any page, in any response, or in the export.

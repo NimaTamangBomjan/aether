@@ -509,6 +509,25 @@ export type Database = {
     };
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string };
+      ai_usage: {
+        Args: { p_list: string };
+        Returns: {
+          cap: number;
+          used: number;
+        }[];
+      };
+      finish_ai_request: {
+        Args: { p_id: string; p_input_tokens: number; p_output_tokens: number; p_success: boolean };
+        Returns: undefined;
+      };
+      invite_preview: {
+        Args: { p_token: string };
+        Returns: {
+          invited_by: string;
+          list_name: string;
+          status: string;
+        }[];
+      };
       list_member_names: {
         Args: { p_list: string };
         Returns: {
@@ -524,6 +543,15 @@ export type Database = {
           member_count: number;
           recipient_count: number;
         }[];
+      };
+      reserve_ai_request: {
+        Args: {
+          p_kind: Database["public"]["Enums"]["ai_kind"];
+          p_list: string;
+          p_recipient: string;
+          p_user: string;
+        };
+        Returns: string;
       };
       set_gift_status: {
         Args: { p_gift: string; p_status: Database["public"]["Enums"]["gift_status"] };

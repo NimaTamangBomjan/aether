@@ -9,15 +9,18 @@ import {
   type FormState,
 } from "@/app/app/actions";
 import { describedBy, Field } from "@/components/app/field";
+import { IdeasPanel } from "@/components/app/ideas-panel";
 import { MoneyInput } from "@/components/app/money-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { RELATIONSHIPS } from "@/lib/types";
 
-export function Onboarding({ firstName }: { firstName: string }) {
+type FirstPerson = { id: string; name: string; hasBudget: boolean };
+
+export function Onboarding({ firstName, usage }: { firstName: string; usage: { used: number; cap: number } }) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [person, setPerson] = useState<{ id: string; name: string } | null>(null);
+  const [person, setPerson] = useState<FirstPerson | null>(null);
   const [finishing, startFinishing] = useTransition();
 
   useEffect(() => {
@@ -42,14 +45,12 @@ export function Onboarding({ firstName }: { firstName: string }) {
         />
       )}
       {step === 3 && person && (
-        <div className="space-y-4">
+        <div className="space-y-5">
           <h1 className="text-2xl font-bold">{person.name} is on your list</h1>
-          <p className="text-muted-foreground">
-            Next, add gift ideas for {person.name}. Tap &ldquo;Mark bought&rdquo; when you buy one, and your totals update
-            right away.
-          </p>
-          <Button className="w-full" disabled={finishing} onClick={() => finish(`/app/people/${person.id}`)}>
-            {finishing ? "One moment…" : `Go to ${person.name}`}
+          <p className="text-muted-foreground">Now the fun part: tap below for gift ideas that fit {person.name} and your budget.</p>
+          <IdeasPanel recipient={person} needsBudget={!person.hasBudget} initialUsage={usage} />
+          <Button className="w-full" variant="secondary" disabled={finishing} onClick={() => finish(`/app/people/${person.id}`)}>
+            {finishing ? "One moment…" : `Done: go to ${person.name}`}
           </Button>
         </div>
       )}
@@ -84,10 +85,16 @@ function BudgetStep({ firstName, onDone }: { firstName: string; onDone: () => vo
   );
 }
 
-function PersonStep({ onDone }: { onDone: (p: { id: string; name: string }) => void }) {
+function PersonStep({ onDone }: { onDone: (p: FirstPerson) => void }) {
   const [state, action, pending] = useActionState<FormState, FormData>(async (prev, formData) => {
     const result = await saveRecipient(prev, formData);
-    if (result.ok && result.id) onDone({ id: result.id, name: String(formData.get("name") ?? "").trim() });
+    if (result.ok && result.id) {
+      onDone({
+        id: result.id,
+        name: String(formData.get("name") ?? "").trim(),
+        hasBudget: String(formData.get("budget") ?? "").trim() !== "",
+      });
+    }
     return result;
   }, {});
   const e = state.fieldErrors ?? {};

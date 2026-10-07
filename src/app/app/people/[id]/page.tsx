@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getListContext } from "@/lib/data/list";
 import { todayInTimeZone } from "@/lib/dates";
 import { AGE_RANGES } from "@/lib/types";
+import { Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PersonView } from "./person-view";
 
@@ -40,6 +41,12 @@ export default async function PersonPage({ params }: PageProps<"/app/people/[id]
           </Button>
         )}
       </div>
+
+      <Button asChild variant="secondary" className="w-full">
+        <Link href={`/app/people/${recipient.id}/ideas`}>
+          <Lightbulb aria-hidden /> Get gift ideas
+        </Link>
+      </Button>
 
       <PersonView
         recipient={recipient}

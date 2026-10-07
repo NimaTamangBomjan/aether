@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => ({
       },
       {
         extends: true,
+        resolve: { alias: { "server-only": path.resolve(import.meta.dirname, "tests/stubs/server-only.ts") } },
+        test: { name: "ai-live", include: ["tests/ai-live/**/*.test.ts"], environment: "node", testTimeout: 60_000 },
+      },
+      {
+        extends: true,
         test: {
           name: "db",
           include: ["tests/db/**/*.test.ts"],
