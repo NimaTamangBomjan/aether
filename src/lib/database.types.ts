@@ -607,6 +607,10 @@ export type Database = {
         Args: { p_gift: string; p_status: Database["public"]["Enums"]["gift_status"] };
         Returns: undefined;
       };
+      transfer_list_ownership: {
+        Args: { p_from: string; p_list: string; p_to: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       age_range: "baby" | "toddler" | "kid" | "tween" | "teen" | "young_adult" | "adult" | "senior";

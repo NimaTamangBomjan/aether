@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { randomBytes, createHash, randomUUID } from "node:crypto";
+import type { Database } from "../../src/lib/database.types";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -11,10 +12,10 @@ if (!url || !anonKey || !serviceKey) {
 
 const noPersist = { auth: { persistSession: false, autoRefreshToken: false } };
 
-export const admin = createClient(url, serviceKey, noPersist);
-export const anon = (): SupabaseClient => createClient(url, anonKey, noPersist);
+export const admin = createClient<Database>(url, serviceKey, noPersist);
+export const anon = (): SupabaseClient<Database> => createClient<Database>(url, anonKey, noPersist);
 
-export type TestUser = { id: string; email: string; client: SupabaseClient; listId: string };
+export type TestUser = { id: string; email: string; client: SupabaseClient<Database>; listId: string };
 
 /** Creates a confirmed user and returns a client signed in as them, plus their own list id. */
 export async function createTestUser(label: string): Promise<TestUser> {

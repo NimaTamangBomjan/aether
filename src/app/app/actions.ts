@@ -7,6 +7,9 @@ import { getListContext } from "@/lib/data/list";
 import { Constants } from "@/lib/database.types";
 import { isValidTimeZone } from "@/lib/dates";
 import { FREE_RECIPIENT_LIMIT } from "@/lib/types";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email/send";
+import { welcomeEmail } from "@/lib/email/templates";
 import {
   budgetInput,
   fieldErrors,
@@ -230,7 +233,18 @@ export async function saveDetectedTimeZone(timeZone: string): Promise<void> {
 
 export async function completeOnboarding(destination?: string): Promise<void> {
   const ctx = await getListContext();
-  await ctx.supabase.from("profiles").update({ onboarded_at: new Date().toISOString() }).eq("id", ctx.userId);
+  const { data: updated } = await ctx.supabase
+    .from("profiles")
+    .update({ onboarded_at: new Date().toISOString() })
+    .eq("id", ctx.userId)
+    .is("onboarded_at", null)
+    .select("id");
+  if (updated?.length && ctx.email) {
+    await sendEmail(ctx.email, welcomeEmail({ name: ctx.profile.display_name, appUrl: env.NEXT_PUBLIC_APP_URL }), {
+      tag: "welcome",
+      idempotencyKey: `welcome-${ctx.userId}`,
+    });
+  }
   refresh();
   const target = destination && /^\/app(\/[\w/-]*)?$/.test(destination) ? destination : "/app";
   redirect(target);

@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 6: Return reminders (in progress). Security review #1 running
+- **Current stage:** 7: Settings, export, account deletion (next). Security review #1 running
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,52 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 6: Return reminders and emails ✅ (Oct 7). Real sending waits for Resend + domain
+
+**Plan**
+- A daily job at 9:00 AM Eastern (`vercel.json`, 14:00 UTC).
+- The rules for who gets what, in the database (`20261012000000_stage6_reminders.sql`).
+- One bundled email per person per day, safe to run twice.
+- Signed one-click unsubscribe.
+- The 4 email templates.
+- A projected AI cost warning.
+- **Risks:** duplicate emails, wrong-day emails across time zones, a hidden gift leaking into an email.
+
+**Done**
+- **`/api/cron/reminders`:** Vercel Cron calls it daily with `Authorization: Bearer CRON_SECRET`, checked with a constant-time comparison; anything else gets a 401.
+- **`due_reminders()`:**
+  - covers Bought or Wrapped gifts whose return-by date is exactly 3 days away or today, in each person's own time zone;
+  - only on lists with a Season Pass;
+  - goes to whoever marked the gift bought, or the owner;
+  - never includes a gift hidden from that person or for the person linked to them;
+  - skips people who turned reminders off.
+- **One email per person per day:** `claim_reminder()` takes today's slot (`reminder_log`, keyed by person + local date) before sending. A second run skips anyone already emailed, and only a failed send can be retried. Resend also gets an idempotency key as a second guard.
+- **Emails** (`src/lib/email/templates.ts`), plain layout with the app name in every subject and everything people typed escaped:
+  - welcome (after onboarding or joining);
+  - family invite (new "Or email an invite" box on the Family page; it creates a fresh single-use link);
+  - Season Pass thank-you (sent from the webhook once per payment);
+  - daily return reminder, with "Last day to return" and "Return window closes in 3 days" sections.
+- **Unsubscribe:** every reminder has a signed unsubscribe link (HMAC with `UNSUBSCRIBE_SECRET`) and a `List-Unsubscribe` one-click header. The link opens a page with a button (so email scanners can't unsubscribe people by accident). A forged link does nothing.
+- **AI cost warning:** the daily job projects this month's AI cost from logged tokens and emails `ADMIN_EMAIL` if it passes $50, at most once a day.
+- **No keys = no crash:** without Resend keys, emails are skipped with a log line and the app works normally.
+
+**Checks (all run, all passing)**
+- Unit tests: +5 (escaping, subjects, receipt amount and date, reminder bundling, unsubscribe signatures).
+- Database tests: +6 (`tests/db/reminders.test.ts`), run at a fixed moment (9 AM ET, Dec 20):
+  - 3 days and day-of only, and only for Bought or Wrapped gifts;
+  - goes to the buyer, and **never includes a gift hidden from them**;
+  - New Zealand users get theirs by their own date;
+  - a pass and reminders being on are both required;
+  - people can't call these functions themselves;
+  - claiming is once per day, with failed sends retryable.
+- Browser tests: +4 flows × phone + desktop (`tests/e2e/emails.spec.ts`, using a local Resend stand-in that records emails):
+  - welcome and thank-you emails;
+  - the cron rejects a missing or wrong secret, sends one reminder, and **running it twice sends nothing extra**;
+  - the unsubscribe link works and turns reminders off, and a forged link does nothing;
+  - emailing an invite, and a bad address.
 
 ---
 
@@ -274,6 +320,10 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Known issues
+- **Real email not sent yet:** needs the Resend account, the API key and a verified sending domain (which needs the domain bought). Before launch, in the Supabase dashboard:
+  - turn on custom SMTP using Resend;
+  - paste `supabase/templates/sign-in.html` into both the "Magic Link" and "Confirm signup" templates, with subject `Your GiftLedger sign-in code: {{ .Token }}`;
+  - set the Site URL and redirect URLs.
 - **Stripe not exercised for real yet:** needs the test keys, a price ID and the allowed domains. Then:
   1. Run the Stripe CLI `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
   2. Pay with test cards 4242 4242 4242 4242 (success) and 4000 0000 0000 0002 (declined), and confirm the pass unlocks and a decline shows Stripe's message.
@@ -285,11 +335,7 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
 
 ## Next step
-Stage 5, payments:
-- Stripe Checkout (one-time $9.99, Season Pass through Jan 31, 2027);
-- the success page waits for the webhook;
-- the webhook (signature check, safe to repeat), handling `checkout.session.completed` and `charge.refunded`;
-- upgrade prompts lead to Checkout;
-- security review #1 by a separate review agent.
-
-Stripe can't be reached from the container until its domains are allowed and test keys are added, so the webhook logic is tested with locally signed events. Real test-card runs wait for the keys.
+Stage 7:
+- settings (name, time zone, email preferences);
+- "Export my data" as CSV (only what you can see);
+- "Delete my account" (choose who takes over a shared list; remove personal data).

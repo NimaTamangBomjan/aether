@@ -3,7 +3,7 @@
 import { Copy, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore, useTransition } from "react";
 import { toast } from "sonner";
-import { cancelInvite, createInviteLink, leaveList, removeMember } from "@/app/app/family/actions";
+import { cancelInvite, createInviteLink, emailInvite, leaveList, removeMember } from "@/app/app/family/actions";
 import { ConfirmButton } from "@/components/app/confirm-button";
 import { UpgradePrompt } from "@/components/app/upgrade-prompt";
 import { Button } from "@/components/ui/button";
@@ -81,9 +81,54 @@ export function InviteCreator() {
               {error.message}
             </p>
           )}
+          <EmailInvite onLimit={(message) => setError({ message, limit: true })} />
         </>
       )}
     </div>
+  );
+}
+
+function EmailInvite({ onLimit }: { onLimit: (message: string) => void }) {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<{ ok: boolean; text: string } | null>(null);
+  const [pending, startTransition] = useTransition();
+  return (
+    <form
+      className="space-y-2 border-t pt-3"
+      noValidate
+      onSubmit={(e) => {
+        e.preventDefault();
+        startTransition(async () => {
+          const result = await emailInvite(email);
+          if (result.ok) {
+            setStatus({ ok: true, text: `Invite sent to ${email}.` });
+            setEmail("");
+          } else if (result.code === "limit") onLimit(result.message);
+          else setStatus({ ok: false, text: result.message });
+        });
+      }}
+    >
+      <Label htmlFor="invite-email">Or email an invite</Label>
+      <div className="flex gap-2">
+        <Input
+          id="invite-email"
+          type="email"
+          inputMode="email"
+          autoComplete="off"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="mom@example.com"
+        />
+        <Button type="submit" variant="outline" disabled={pending || !email}>
+          {pending ? "Sending…" : "Send"}
+        </Button>
+      </div>
+      {status && (
+        <p role={status.ok ? "status" : "alert"} className={status.ok ? "text-sm text-ok-foreground" : "text-sm text-over-foreground"}>
+          {status.text}
+        </p>
+      )}
+    </form>
   );
 }
 

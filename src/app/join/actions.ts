@@ -5,9 +5,12 @@ import { redirect } from "next/navigation";
 import { ACTIVE_LIST_COOKIE } from "@/lib/data/list";
 import { isInviteTokenFormat } from "@/lib/invite-token";
 import { requireUser } from "@/lib/auth";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email/send";
+import { welcomeEmail } from "@/lib/email/templates";
 
 export async function joinList(token: string, displayName?: string): Promise<{ error: string } | void> {
-  const { supabase, userId } = await requireUser(`/join/${token}`);
+  const { supabase, userId, email } = await requireUser(`/join/${token}`);
   if (!isInviteTokenFormat(token)) return { error: "This invite link isn't complete. Ask for a new one." };
 
   const { data: listId, error } = await supabase.rpc("accept_invite", { p_token: token });
@@ -29,10 +32,17 @@ export async function joinList(token: string, displayName?: string): Promise<{ e
   const name = displayName?.trim().slice(0, 60);
   if (name) await supabase.from("profiles").update({ display_name: name }).eq("id", userId);
   // People who join someone's list skip the setup steps for a new list.
-  await supabase
+  const { data: firstTime } = await supabase
     .from("profiles")
     .update({ onboarded_at: new Date().toISOString() })
     .eq("id", userId)
-    .is("onboarded_at", null);
+    .is("onboarded_at", null)
+    .select("display_name");
+  if (firstTime?.length && email) {
+    await sendEmail(email, welcomeEmail({ name: firstTime[0].display_name, appUrl: env.NEXT_PUBLIC_APP_URL }), {
+      tag: "welcome",
+      idempotencyKey: `welcome-${userId}`,
+    });
+  }
   redirect("/app");
 }

@@ -1,5 +1,8 @@
 import Stripe from "stripe";
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
+import { sendEmail } from "@/lib/email/send";
+import { passReceiptEmail } from "@/lib/email/templates";
 import { interpretEvent } from "@/lib/payments";
 import { serverEnv } from "@/lib/server-env";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,7 +26,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
 
   if (action.kind === "paid") {
-    const { error } = await admin.rpc("record_checkout_paid", {
+    const { data: applied, error } = await admin.rpc("record_checkout_paid", {
       p_event_id: action.eventId,
       p_session_id: action.sessionId,
       p_payment_intent: action.paymentIntent as string,
@@ -35,6 +38,7 @@ export async function POST(request: Request) {
       console.error(`stripe_webhook_failed event=${event.id} type=${event.type}`);
       return NextResponse.json({ error: "try again" }, { status: 500 }); // Stripe will retry
     }
+    if (applied) await sendThankYou(admin, action.userId, action.amount, event.id);
   } else if (action.kind === "refunded") {
     const { error } = await admin.rpc("record_charge_refunded", {
       p_event_id: action.eventId,
@@ -49,4 +53,17 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ received: true });
+}
+
+async function sendThankYou(admin: ReturnType<typeof createAdminClient>, userId: string, amount: number, eventId: string) {
+  const [{ data: user }, { data: profile }] = await Promise.all([
+    admin.auth.admin.getUserById(userId),
+    admin.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
+  ]);
+  const email = user?.user?.email;
+  if (!email) return;
+  await sendEmail(email, passReceiptEmail({ name: profile?.display_name ?? "", amountCents: amount, appUrl: env.NEXT_PUBLIC_APP_URL }), {
+    tag: "receipt",
+    idempotencyKey: `receipt-${eventId}`,
+  });
 }

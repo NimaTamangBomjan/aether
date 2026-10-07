@@ -8,6 +8,8 @@ import { ACTIVE_LIST_COOKIE, getListContext } from "@/lib/data/list";
 import { env } from "@/lib/env";
 import { newInviteToken } from "@/lib/invite-token";
 import { FREE_MEMBER_LIMIT } from "@/lib/types";
+import { emailConfigured, sendEmail } from "@/lib/email/send";
+import { inviteEmail } from "@/lib/email/templates";
 
 const uuid = z.uuid();
 
@@ -93,4 +95,20 @@ export async function switchList(formData: FormData) {
   }
   revalidatePath("/app", "layout");
   redirect("/app");
+}
+
+/** Creates a fresh single-use link and emails it. The address is only used for this one email. */
+export async function emailInvite(email: string): Promise<{ ok: true } | { ok: false; message: string; code?: "limit" }> {
+  const parsed = z.email().safeParse(email.trim().toLowerCase());
+  if (!parsed.success) return { ok: false, message: "Please enter a valid email address." };
+  if (!emailConfigured()) return { ok: false, message: "Sending invites by email isn't switched on yet. Copy the link instead." };
+  const created = await createInviteLink();
+  if (!created.ok) return created;
+  const ctx = await getListContext();
+  const sent = await sendEmail(
+    parsed.data,
+    inviteEmail({ inviterName: ctx.profile.display_name, listName: ctx.list.name, inviteUrl: created.url }),
+    { tag: "invite" },
+  );
+  return sent ? { ok: true } : { ok: false, message: "Couldn't send the email. Copy the link instead." };
 }
