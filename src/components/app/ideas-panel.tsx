@@ -99,7 +99,8 @@ export function IdeasPanel({
       ) : (
         ideas.length === 0 &&
         !loading &&
-        failure?.code !== "limit" && (
+        failure?.code !== "limit" &&
+        failure?.code !== "limit_member" && (
           <Button className="w-full" onClick={() => run("initial")}>
             <Sparkles aria-hidden /> Get ideas
           </Button>

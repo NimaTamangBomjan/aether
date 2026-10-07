@@ -48,6 +48,8 @@ export default defineConfig({
         ANTHROPIC_API_KEY: "test-key-not-real",
         ANTHROPIC_BASE_URL: `http://127.0.0.1:${FAKE_AI_PORT}`,
         AI_TIMEOUT_MS: "3000",
+        // Webhook signatures are checked with this test-only secret; Stripe itself isn't contacted.
+        STRIPE_WEBHOOK_SECRET: "whsec_local_test_secret_not_real",
         NEXT_PUBLIC_APP_URL: `http://localhost:${PORT}`,
       },
     },

@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 5: Stripe payments and limits (next)
+- **Current stage:** 6: Return reminders (in progress). Security review #1 running
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,54 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Stage 5: Stripe payments and limits ✅ (Oct 7). Real test-card runs wait for Stripe keys
+
+**Plan**
+- Checkout session (one-time $9.99) and a success page that waits for the webhook.
+- A webhook that verifies Stripe's signature and applies each event once.
+- Payment and refund handling in the database (`20261011000000_stage5_payments.sql`).
+- Security review #1 by a separate agent.
+- **Risk:** granting a pass by mistake, or not granting it after payment. **Mitigation:** the webhook is the only thing that unlocks the pass; everything is tested with signed events.
+
+**Done**
+- **`/app/upgrade`:**
+  - the price, what's included and "Upgrade for $9.99", which opens Stripe Checkout;
+  - "You have the Season Pass through Jan 31, 2027" once paid;
+  - "Checkout canceled. You weren't charged.";
+  - stops selling after the season ends;
+  - a note for members that a pass covers the lists you own.
+- **`/app/upgrade/success`:** shows "Unlocking your Season Pass…" and checks the database every 1.5 seconds. It flips to "active" as soon as the webhook lands, and after about 30 seconds explains it may take a minute. The page itself unlocks nothing.
+- **`/api/stripe/webhook`:**
+  - verifies the `stripe-signature` with `STRIPE_WEBHOOK_SECRET`; anything unsigned or wrongly signed gets a 400;
+  - `checkout.session.completed` and `async_payment_succeeded` grant the pass only for our own paid one-time checkouts, tagged with the user;
+  - `charge.refunded`: a full refund removes the pass (unless another payment still covers it); a partial refund keeps it;
+  - each Stripe event is applied once (the `stripe_events` table, inside one database transaction), so retries and duplicates are harmless.
+- **Upgrade prompts:** the existing ones at 5 people, 1 member and 10 AI requests now lead here. Members who hit the AI limit on someone else's list are told to ask the owner.
+- **Logic:** pure and tested in `src/lib/payments.ts` and `src/lib/season.ts`.
+
+**Checks (all run, all passing)**
+- Unit tests: +8 (Checkout parameters, how each webhook event is read, Season Pass dates in New York time).
+- Database tests: +6 (`tests/db/payments.test.ts`):
+  - people can't record payments themselves;
+  - a payment grants the pass through Jan 31, 2027;
+  - the same event twice adds one row;
+  - partial vs. full refunds, and a second payment keeping the pass;
+  - a deleted account's payment is still recorded;
+  - the processed-events list is private.
+- Browser tests: +5 flows × phone + desktop (`tests/e2e/payments.spec.ts`), sending events signed exactly as Stripe does:
+  - unsigned or wrongly signed events are rejected;
+  - **the success page alone unlocks nothing**;
+  - the webhook unlocks the pass within seconds and the waiting page notices on its own;
+  - a repeated event is harmless;
+  - the limit is lifted and a 6th person can be added;
+  - after a refund the limits return but all 6 people stay visible;
+  - with no keys, "Checkout isn't switched on yet";
+  - cancel shows "You weren't charged";
+  - the owner's pass lifts the family limit.
+- Full suite: type check, lint, 77 unit, 43 database and 70 browser tests passing.
 
 ---
 
@@ -226,6 +274,10 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Known issues
+- **Stripe not exercised for real yet:** needs the test keys, a price ID and the allowed domains. Then:
+  1. Run the Stripe CLI `stripe listen --forward-to localhost:3000/api/stripe/webhook`.
+  2. Pay with test cards 4242 4242 4242 4242 (success) and 4000 0000 0000 0002 (declined), and confirm the pass unlocks and a decline shows Stripe's message.
+- **Stripe Tax is off** until the owner decides about sales tax.
 - **Real AI not tested yet:** needs the Anthropic key. Once `APP_ANTHROPIC_API_KEY` is in the cloud environment, run `npm run env:local && npm run test:ai-live`. That's 10 sample profiles at about 5 cents in total; it checks every answer and prints the ideas for review. Structured output for `claude-haiku-4-5` is assumed to work; if the API rejects it, the fallback is to drop `output_config` (the Zod check stays).
 - **AI cost warning:** the "projected cost over $50/month" alert will be added to the daily cron in Stage 6. Usage is already logged per request.
 - `npm audit` reports 5 "high" issues, all in development-only lint tooling (`braces`, used by `eslint-config-next`), with no fixed version yet. `npm audit --omit=dev` (what ships to users) reports 0. Re-check before launch.

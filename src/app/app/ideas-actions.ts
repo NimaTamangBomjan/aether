@@ -15,7 +15,15 @@ export type IdeasResult =
   | { ok: true; ideas: Idea[]; usage: IdeasUsage }
   | {
       ok: false;
-      code: "limit" | "rate" | "budget_needed" | "no_budget_left" | "failed" | "not_configured" | "invalid_input";
+      code:
+        | "limit"
+        | "limit_member"
+        | "rate"
+        | "budget_needed"
+        | "no_budget_left"
+        | "failed"
+        | "not_configured"
+        | "invalid_input";
       message: string;
       usage?: IdeasUsage;
     };
@@ -83,6 +91,14 @@ export async function requestIdeas(input: z.input<typeof requestSchema>): Promis
   });
   if (reserveError || !requestId) {
     const usage = await getUsage(ctx);
+    if (reserveError?.message.includes("AI_LIMIT") && !ctx.isOwner) {
+      return {
+        ok: false,
+        code: "limit_member",
+        usage,
+        message: `This list has used all ${usage.cap} idea requests. The list owner can unlock more with the Season Pass.`,
+      };
+    }
     if (reserveError?.message.includes("AI_LIMIT")) {
       return {
         ok: false,

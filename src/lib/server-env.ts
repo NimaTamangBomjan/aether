@@ -14,6 +14,7 @@ const schema = z.object({
   RESEND_API_KEY: z.string().min(10).optional(),
   EMAIL_FROM: z.string().min(3).optional(),
   SENTRY_DSN: z.string().optional(),
+  ADMIN_EMAIL: z.email().optional(),
 });
 
 let cached: z.infer<typeof schema> | undefined;

@@ -509,6 +509,13 @@ export type Database = {
     };
     Functions: {
       accept_invite: { Args: { p_token: string }; Returns: string };
+      ai_tokens_this_month: {
+        Args: { p_now?: string };
+        Returns: {
+          input_tokens: number;
+          output_tokens: number;
+        }[];
+      };
       ai_usage: {
         Args: { p_list: string };
         Returns: {
@@ -516,8 +523,31 @@ export type Database = {
           used: number;
         }[];
       };
+      claim_reminder: {
+        Args: { p_gift_ids: string[]; p_local_date: string; p_user: string };
+        Returns: boolean;
+      };
+      due_reminders: {
+        Args: { p_now?: string };
+        Returns: {
+          days_left: number;
+          display_name: string;
+          email: string;
+          gift_id: string;
+          gift_title: string;
+          local_date: string;
+          recipient_name: string;
+          return_by: string;
+          store: string;
+          user_id: string;
+        }[];
+      };
       finish_ai_request: {
         Args: { p_id: string; p_input_tokens: number; p_output_tokens: number; p_success: boolean };
+        Returns: undefined;
+      };
+      finish_reminder: {
+        Args: { p_local_date: string; p_sent: boolean; p_user: string };
         Returns: undefined;
       };
       invite_preview: {
@@ -543,6 +573,26 @@ export type Database = {
           member_count: number;
           recipient_count: number;
         }[];
+      };
+      record_charge_refunded: {
+        Args: {
+          p_amount: number;
+          p_amount_refunded: number;
+          p_event_id: string;
+          p_payment_intent: string;
+        };
+        Returns: boolean;
+      };
+      record_checkout_paid: {
+        Args: {
+          p_amount: number;
+          p_currency: string;
+          p_event_id: string;
+          p_payment_intent: string;
+          p_session_id: string;
+          p_user: string;
+        };
+        Returns: boolean;
       };
       reserve_ai_request: {
         Args: {

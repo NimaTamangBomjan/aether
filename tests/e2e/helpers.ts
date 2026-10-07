@@ -94,3 +94,31 @@ export async function quickAddGift(page: Page, title: string, price?: string) {
   await page.getByRole("button", { name: "Add gift" }).click();
   await expect(page.getByTestId("gift").filter({ hasText: title })).toBeVisible();
 }
+
+// ---------- Server-side helpers for tests (local database only) ----------
+import { readFileSync } from "node:fs";
+import { createClient } from "@supabase/supabase-js";
+
+function localEnv(): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const line of readFileSync(".env.local", "utf8").split("\n")) {
+    const m = line.match(/^([A-Z0-9_]+)=(.*)$/);
+    if (m) out[m[1]] = m[2];
+  }
+  return out;
+}
+
+export function adminClient() {
+  const env = localEnv();
+  return createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
+export async function userIdFor(email: string) {
+  const { data, error } = await adminClient().auth.admin.listUsers({ perPage: 1000 });
+  if (error) throw error;
+  const user = data.users.find((u) => u.email === email);
+  if (!user) throw new Error(`no user ${email}`);
+  return user.id;
+}
