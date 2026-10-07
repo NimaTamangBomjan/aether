@@ -83,7 +83,7 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 
 **Checks**
 - Typecheck, lint and production build pass; the browser console stays clean on every page tested.
-- Unit and database tests: 187 passing.
+- Unit and database tests: 180 passing.
 - Browser tests: see the run recorded under Security review #2's checks below.
 
 ---
