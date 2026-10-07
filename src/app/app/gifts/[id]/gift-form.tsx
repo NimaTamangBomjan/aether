@@ -18,11 +18,16 @@ export function GiftForm({
   today,
   members,
   meId,
+  hiddenFrom,
+  linkedName,
 }: {
   gift: Gift;
   today: string;
   members: { id: string; name: string }[];
   meId: string;
+  hiddenFrom: string[];
+  /** The family member this gift's person is linked to; they never see it anyway. */
+  linkedName?: string;
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveGift, {});
   const [status, setStatus] = useState(gift.status);
@@ -139,6 +144,29 @@ export function GiftForm({
         <Field id="link" label="Link" hint="Optional, e.g. the product page." error={e.link}>
           <Input id="link" name="link" type="url" inputMode="url" defaultValue={gift.link ?? ""} placeholder="https://" {...describedBy("link", e.link, "x")} />
         </Field>
+
+        {members.length > 1 && (
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Hide this gift from</legend>
+            {linkedName && (
+              <p className="text-sm text-muted-foreground">{linkedName} never sees gifts for this person.</p>
+            )}
+            {members
+              .filter((m) => m.id !== meId)
+              .map((m) => (
+                <label key={m.id} className="flex min-h-11 items-center gap-3">
+                  <input
+                    type="checkbox"
+                    name="hidden_from"
+                    value={m.id}
+                    defaultChecked={hiddenFrom.includes(m.id)}
+                    className="size-5 accent-primary"
+                  />
+                  {m.name}
+                </label>
+              ))}
+          </fieldset>
+        )}
 
         <Field id="gift-notes" label="Notes" error={e.notes}>
           <Textarea id="gift-notes" name="notes" defaultValue={gift.notes} maxLength={1000} rows={3} {...describedBy("gift-notes", e.notes)} />

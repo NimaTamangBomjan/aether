@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** 4: Family sharing (in progress)
+- **Current stage:** 5: Stripe payments and limits (next)
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -33,23 +33,40 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 
 ---
 
-## Stage 4: Family sharing (in progress)
+## Stage 4: Family sharing ✅ (Oct 7)
 
-**Plan**
-- `/app/family`:
-  - members, with remove (owner) and leave (member);
-  - create an invite link with copy and share buttons; it lasts 7 days and works once;
-  - pending invites, which can be cancelled;
-  - the free 1-member limit prompt;
-  - invite creation limited to 10 an hour.
-- `/join/[token]`: sign in, then join. Joining switches you to that list and skips onboarding. Expired, used and full links each get a friendly message.
-- A list switcher in the header for people on 2+ lists (stored in a cookie, checked against membership every time).
-- On the gift form:
-  - "Hide this gift from…" checkboxes;
-  - the activity line ("Marked bought by Alex, Nov 14") and "Bought by".
-- On the person form: "This person is on the list as…" links them to a member, so they never see their own gifts.
-- **Database:** no new tables. One small migration adds `create_invite()`, so the token hash and the per-hour limit are checked in one place.
-- **Risk:** a hidden gift leaking through any page. **Mitigation:** browser tests with an owner and a member in separate browsers, checking the page text and HTML.
+**Done**
+- **`/app/family`:**
+  - who's on the list;
+  - the owner can remove members (with an "are you sure?" step) and members can leave;
+  - "Create invite link" with Copy and the phone's Share sheet; the link works once and lasts 7 days;
+  - unused links can be cancelled;
+  - the free plan shows "Your free plan includes 1 family member. Unlock unlimited family members for $9.99." after one member.
+- **`/join/[token]`:**
+  - signed out: "Sign in to join", and you come back to the invite after signing in;
+  - signed in: "[Owner] invited you to join [list]", your name field, then Join;
+  - expired, used, incomplete and unknown links each get a plain-language message;
+  - joining switches you to that list and skips the new-list setup.
+- **List switcher** in the header when you're on 2+ lists ("Holidays 2026 (mine)" / "Maria's Holidays 2026"). The choice is kept in a cookie and re-checked against your memberships every request.
+- **Gift form "Hide this gift from":** checkboxes for everyone else on the list, owner included. The person page shows "Hidden from Alex" to people who can see the gift.
+- **Linking a person:** the person form asks "Is this person on your family list?". Once linked, that member never sees the person, their gifts, their totals, or their pages (404).
+- **Activity line:** "Marked bought by Alex, Nov 14" (and "Added by…"), shown on shared lists in the viewer's time zone.
+- **Members:** can add gifts, edit and delete their own, one-tap status on anything they can see, and use Get ideas from the owner's pool. The owner-only controls (add/edit people, budget, invites) are hidden for them and blocked by the database.
+- **Migration `20261010000000_stage4_sharing.sql`:**
+  - invite fingerprints must be 64-character sha256;
+  - at most 10 invites per person per hour, for every way of creating one;
+  - `invite_preview()`;
+  - a person can only be linked to, and a gift's buyer can only be, someone on the list.
+
+**Checks (all run, all passing)**
+- Database tests: +7 (`tests/db/sharing.test.ts`): invite preview, fingerprint format, 10-an-hour limit, linking and buyer limited to list members, members can hide their own gift from the owner but not others' gifts.
+- Browser tests: +5 flows × phone + desktop (`tests/e2e/family.spec.ts`), with the owner and the member in separate browsers:
+  - invite, join, the member marks a gift bought, the owner sees "Marked bought by…", the free member limit, and a link can't be used twice;
+  - **a hidden gift never reaches the member**: not on the page, not in the page source, not in the totals, and its direct link returns 404;
+  - linking a person hides them and their gifts (person page and ideas page return 404);
+  - switching lists and leaving;
+  - broken, unknown and signed-out links.
+- Screens checked by screenshot (family page, join page, member view).
 
 ---
 
@@ -204,6 +221,8 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **AI request pool is per list:** it belongs to the list owner's plan, as agreed. Members using "Get ideas" draw from the same pool.
 - **AI stand-in for tests only:** browser tests point the real SDK at `tests/fake-ai/server.mjs` through `ANTHROPIC_BASE_URL`. The app itself has no test-only code paths.
 - **`npm test`** runs unit and database tests. `npm run test:ai-live` is separate because it costs real money.
+- **Invites are shared by link, not email, for now.** Maria texts it to her mom. The "family invite" email template comes with the other emails in Stage 6.
+- **Joiners choose the name** their family sees. Owners will edit theirs in Settings (Stage 7); until then it's the start of their email address.
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
 
 ## Known issues
@@ -214,10 +233,11 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - Production Supabase needs the sign-in email template pasted into its dashboard (Stage 6 checklist).
 
 ## Next step
-Stage 4, family sharing:
-- invite links (create, copy/share, expire after 7 days, single use) and the join page;
-- a list switcher;
-- the members screen (remove, leave);
-- the per-gift "Hide from" setting and linking a person to a family member;
-- the activity line ("Marked bought by Alex, Nov 14");
-- tests that a hidden gift never appears for that member on any page, in any response, or in the export.
+Stage 5, payments:
+- Stripe Checkout (one-time $9.99, Season Pass through Jan 31, 2027);
+- the success page waits for the webhook;
+- the webhook (signature check, safe to repeat), handling `checkout.session.completed` and `charge.refunded`;
+- upgrade prompts lead to Checkout;
+- security review #1 by a separate review agent.
+
+Stripe can't be reached from the container until its domains are allowed and test keys are added, so the webhook logic is tested with locally signed events. Real test-card runs wait for the keys.

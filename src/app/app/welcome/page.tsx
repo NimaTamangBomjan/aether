@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Welcome" };
 export const maxDuration = 60;
 
 export default async function WelcomePage() {
-  const ctx = await getListContext("/app/welcome");
+  const ctx = await getListContext();
   if (ctx.profile.onboarded_at) redirect("/app");
   const { data: usage } = await ctx.supabase.rpc("ai_usage", { p_list: ctx.list.id });
   return <Onboarding firstName={ctx.profile.display_name} usage={usage?.[0] ?? { used: 0, cap: 10 }} />;

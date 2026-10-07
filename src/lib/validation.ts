@@ -58,6 +58,10 @@ export const recipientInput = z.object({
     ),
   notes: text(1000, "Notes"),
   dont_buy_notes: text(1000, "Don't-buy notes"),
+  linked_user_id: z
+    .union([z.uuid(), z.literal("")])
+    .optional()
+    .transform((v) => (v ? v : null)),
 });
 export type RecipientInput = z.infer<typeof recipientInput>;
 

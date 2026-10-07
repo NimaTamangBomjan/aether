@@ -30,17 +30,35 @@ export function PersonView({
   userId,
   isOwner,
   today,
+  timeZone,
+  names,
+  shared,
+  hiddenFrom,
 }: {
   recipient: Recipient;
   gifts: Gift[];
   userId: string;
   isOwner: boolean;
   today: string;
+  timeZone: string;
+  names: Record<string, string>;
+  shared: boolean;
+  hiddenFrom: Record<string, string[]>;
 }) {
   const [optimisticGifts, setOptimisticStatus] = useOptimistic(
     gifts,
     (current, change: { id: string; status: GiftStatus }) =>
-      current.map((g) => (g.id === change.id ? { ...g, status: change.status } : g)),
+      current.map((g) =>
+        g.id === change.id
+          ? {
+              ...g,
+              status: change.status,
+              bought_by: g.bought_by ?? userId,
+              status_changed_by: userId,
+              status_changed_at: new Date().toISOString(),
+            }
+          : g,
+      ),
   );
   const [, startTransition] = useTransition();
   const summary = summarizePerson(recipient, optimisticGifts);
@@ -98,6 +116,10 @@ export function PersonView({
                         {gift.store ? ` · ${gift.store}` : ""}
                       </p>
                       <ReturnLine gift={gift} today={today} />
+                      {shared && <ActivityLine gift={gift} names={names} timeZone={timeZone} />}
+                      {hiddenFrom[gift.id]?.length ? (
+                        <p className="text-sm text-muted-foreground">Hidden from {hiddenFrom[gift.id].join(", ")}</p>
+                      ) : null}
                     </div>
                     <span className={cn("shrink-0 rounded-full px-3 py-1 text-sm font-medium", STATUS_STYLE[gift.status])}>
                       {STATUS_LABEL[gift.status]}
@@ -129,6 +151,23 @@ export function PersonView({
         )}
       </section>
     </>
+  );
+}
+
+function ActivityLine({ gift, names, timeZone }: { gift: Gift; names: Record<string, string>; timeZone: string }) {
+  if (!gift.status_changed_by || !gift.status_changed_at) return null;
+  const who = names[gift.status_changed_by] ?? "a family member";
+  const when = new Date(gift.status_changed_at).toLocaleDateString("en-US", { timeZone, month: "short", day: "numeric" });
+  const text =
+    gift.status === "idea"
+      ? `Added by ${who}, ${when}`
+      : `Marked ${STATUS_LABEL[gift.status].toLowerCase()} by ${who}, ${when}`;
+  const buyer = gift.bought_by && gift.bought_by !== gift.status_changed_by ? names[gift.bought_by] : null;
+  return (
+    <p className="text-sm text-muted-foreground" data-testid="activity">
+      {text}
+      {buyer ? ` · bought by ${buyer}` : ""}
+    </p>
   );
 }
 

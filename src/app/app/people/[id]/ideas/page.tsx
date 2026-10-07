@@ -10,7 +10,7 @@ export const maxDuration = 60;
 
 export default async function IdeasPage({ params }: PageProps<"/app/people/[id]/ideas">) {
   const { id } = await params;
-  const ctx = await getListContext(`/app/people/${id}/ideas`);
+  const ctx = await getListContext();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
   const [{ data: recipient }, { data: usage }] = await Promise.all([

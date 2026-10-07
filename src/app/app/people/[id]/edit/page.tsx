@@ -9,17 +9,19 @@ export const metadata: Metadata = { title: "Edit person" };
 
 export default async function EditPersonPage({ params }: PageProps<"/app/people/[id]/edit">) {
   const { id } = await params;
-  const ctx = await getListContext(`/app/people/${id}/edit`);
+  const ctx = await getListContext();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   if (!ctx.isOwner) redirect(`/app/people/${id}`);
 
-  const { data: recipient } = await ctx.supabase
-    .from("recipients")
-    .select("*")
-    .eq("id", id)
-    .eq("list_id", ctx.list.id)
-    .maybeSingle();
+  const [{ data: recipient }, { data: members }] = await Promise.all([
+    ctx.supabase.from("recipients").select("*").eq("id", id).eq("list_id", ctx.list.id).maybeSingle(),
+    ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id }),
+  ]);
   if (!recipient) notFound();
+  const memberOptions = (members ?? []).map((m) => ({
+    id: m.user_id,
+    name: m.user_id === ctx.userId ? "me" : m.display_name || "a family member",
+  }));
 
   return (
     <div className="space-y-4 pt-2">
@@ -27,7 +29,7 @@ export default async function EditPersonPage({ params }: PageProps<"/app/people/
         ← Back to {recipient.name}
       </Link>
       <h1 className="text-2xl font-bold">Edit {recipient.name}</h1>
-      <RecipientForm recipient={recipient} submitLabel="Save changes" />
+      <RecipientForm recipient={recipient} submitLabel="Save changes" members={memberOptions} />
       <RecipientDangerZone id={recipient.id} name={recipient.name} archived={Boolean(recipient.archived_at)} />
     </div>
   );

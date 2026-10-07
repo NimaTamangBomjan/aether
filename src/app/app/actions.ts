@@ -43,33 +43,41 @@ export async function saveRecipient(_prev: FormState, formData: FormData): Promi
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
   const { budget, ...rest } = parsed.data;
   const values = { ...rest, budget_cents: budget };
+  // Linking a person to yourself hides them from you, so the saved row can't be read back.
+  const linkedToMe = values.linked_user_id === ctx.userId;
 
   const id = formData.get("id")?.toString();
   if (id) {
     if (!uuid.safeParse(id).success) return { error: TRY_AGAIN };
-    const { data, error } = await ctx.supabase
-      .from("recipients")
-      .update(values)
-      .eq("id", id)
-      .eq("list_id", ctx.list.id)
-      .select("id");
-    if (error || !data?.length) return { error: TRY_AGAIN };
+    const query = ctx.supabase.from("recipients").update(values).eq("id", id).eq("list_id", ctx.list.id);
+    const { data, error } = linkedToMe ? { ...(await query), data: [{ id }] } : await query.select("id");
+    if (error) return linkError(error.message);
+    if (!data?.length) return { error: TRY_AGAIN };
     refresh();
-    redirect(`/app/people/${id}`);
+    redirect(linkedToMe ? "/app" : `/app/people/${id}`);
   }
 
-  const { data, error } = await ctx.supabase
-    .from("recipients")
-    .insert({ ...values, list_id: ctx.list.id, created_by: ctx.userId })
-    .select("id")
-    .single();
+  const insert = { ...values, list_id: ctx.list.id, created_by: ctx.userId };
+  if (linkedToMe) {
+    const { error } = await ctx.supabase.from("recipients").insert(insert);
+    if (error) return error.message.includes("RECIPIENT_LIMIT") ? { code: "limit", error: LIMIT_MESSAGE } : linkError(error.message);
+    refresh();
+    redirect("/app");
+  }
+  const { data, error } = await ctx.supabase.from("recipients").insert(insert).select("id").single();
   if (error) {
     if (error.message.includes("RECIPIENT_LIMIT")) return { code: "limit", error: LIMIT_MESSAGE };
-    return { error: TRY_AGAIN };
+    return linkError(error.message);
   }
   refresh();
   if (formData.get("then") === "stay") return { ok: true, id: data.id };
   redirect(`/app/people/${data.id}`);
+}
+
+function linkError(message: string): FormState {
+  return message.includes("LINKED_USER_NOT_MEMBER")
+    ? { fieldErrors: { linked_user_id: "Choose someone who's on this list." } }
+    : { error: TRY_AGAIN };
 }
 
 export async function setRecipientArchived(id: string, archived: boolean): Promise<FormState> {
@@ -141,8 +149,36 @@ export async function saveGift(_prev: FormState, formData: FormData): Promise<Fo
     .update({ ...rest, price_cents: price })
     .eq("id", id)
     .select("recipient_id");
-  if (error) return { error: TRY_AGAIN };
+  if (error) {
+    return error.message.includes("BUYER_NOT_MEMBER")
+      ? { fieldErrors: { bought_by: "Choose someone who's on this list." } }
+      : { error: TRY_AGAIN };
+  }
   if (!data?.length) return { error: "You can only edit gifts you added. You can still change their status." };
+
+  // "Hide from": keep exactly the people ticked on the form (never yourself, only people on the list).
+  const { data: members } = await ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id });
+  const memberIds = new Set((members ?? []).map((m) => m.user_id));
+  const wanted = new Set(
+    formData
+      .getAll("hidden_from")
+      .map(String)
+      .filter((u) => uuid.safeParse(u).success && memberIds.has(u) && u !== ctx.userId),
+  );
+  const { data: existing } = await ctx.supabase.from("gift_hidden_from").select("user_id").eq("gift_id", id);
+  const current = new Set((existing ?? []).map((r) => r.user_id));
+  const toRemove = [...current].filter((u) => !wanted.has(u));
+  const toAdd = [...wanted].filter((u) => !current.has(u));
+  if (toRemove.length) {
+    await ctx.supabase.from("gift_hidden_from").delete().eq("gift_id", id).in("user_id", toRemove);
+  }
+  if (toAdd.length) {
+    const { error: hideError } = await ctx.supabase
+      .from("gift_hidden_from")
+      .insert(toAdd.map((user_id) => ({ gift_id: id, user_id })));
+    if (hideError) return { error: TRY_AGAIN };
+  }
+
   refresh();
   redirect(`/app/people/${data[0].recipient_id}`);
 }

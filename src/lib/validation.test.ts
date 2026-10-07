@@ -20,7 +20,15 @@ describe("person form", () => {
       interests: ["gardening", "tea", "mystery novels"],
       notes: "Loves birds",
       dont_buy_notes: "No more mugs",
+      linked_user_id: null,
     });
+  });
+
+  it("accepts a link to a family member, or none", () => {
+    const id = "6f1c2a7e-3b4d-4c5e-8f9a-0b1c2d3e4f5a";
+    expect(recipientInput.parse({ name: "A", linked_user_id: id }).linked_user_id).toBe(id);
+    expect(recipientInput.parse({ name: "A", linked_user_id: "" }).linked_user_id).toBeNull();
+    expect(recipientInput.safeParse({ name: "A", linked_user_id: "not-an-id" }).success).toBe(false);
   });
 
   it("only needs a name", () => {

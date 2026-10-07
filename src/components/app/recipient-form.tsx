@@ -15,7 +15,16 @@ import { AGE_RANGES, RELATIONSHIPS, type Recipient } from "@/lib/types";
 
 const OTHER = "__other";
 
-export function RecipientForm({ recipient, submitLabel = "Save" }: { recipient?: Recipient; submitLabel?: string }) {
+export function RecipientForm({
+  recipient,
+  submitLabel = "Save",
+  members = [],
+}: {
+  recipient?: Recipient;
+  submitLabel?: string;
+  /** Everyone on the list, with "Me" for the viewer. Shown only when the list is shared. */
+  members?: { id: string; name: string }[];
+}) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveRecipient, {});
   const known = (RELATIONSHIPS as readonly string[]).includes(recipient?.relationship ?? "");
   const [relationship, setRelationship] = useState(
@@ -86,6 +95,24 @@ export function RecipientForm({ recipient, submitLabel = "Save" }: { recipient?:
       <Field id="dont_buy_notes" label="Already has / don't buy" hint="Things to avoid, so you and the AI don't suggest them." error={e.dont_buy_notes}>
         <Textarea id="dont_buy_notes" name="dont_buy_notes" defaultValue={recipient?.dont_buy_notes} maxLength={1000} rows={2} {...describedBy("dont_buy_notes", e.dont_buy_notes, "x")} />
       </Field>
+
+      {members.length > 1 && (
+        <Field
+          id="linked_user_id"
+          label="Is this person on your family list?"
+          hint="If you link them, they won't see this person or any gifts for them. Great for keeping surprises."
+          error={e.linked_user_id}
+        >
+          <NativeSelect id="linked_user_id" name="linked_user_id" defaultValue={recipient?.linked_user_id ?? ""} {...describedBy("linked_user_id", e.linked_user_id, "x")}>
+            <option value="">No</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                Yes, this is {m.name}
+              </option>
+            ))}
+          </NativeSelect>
+        </Field>
+      )}
 
       {state.code === "limit" && state.error ? (
         <UpgradePrompt message={state.error} />

@@ -16,7 +16,7 @@ import { FREE_RECIPIENT_LIMIT } from "@/lib/types";
 export const metadata: Metadata = { title: "Your list" };
 
 export default async function Dashboard() {
-  const ctx = await getListContext("/app");
+  const ctx = await getListContext();
   if (!ctx.profile.onboarded_at) redirect("/app/welcome");
 
   const { recipients, gifts } = await getListData(ctx);
@@ -56,7 +56,9 @@ export default async function Dashboard() {
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
           <p>
             {summary.people.length === 0
-              ? "Add the people you're shopping for."
+              ? ctx.isOwner
+                ? "Add the people you're shopping for."
+                : "The list owner adds people. You can add gift ideas and mark what you bought."
               : summary.stillNeedGift === 0
                 ? "Everyone has a gift. Nice work!"
                 : `${summary.stillNeedGift} of ${summary.people.length} still need a gift`}
@@ -87,7 +89,7 @@ export default async function Dashboard() {
 
         {summary.people.length === 0 ? (
           <div className="rounded-xl border border-dashed p-6 text-center">
-            <p className="mb-4 text-muted-foreground">No one on your list yet.</p>
+            <p className="mb-4 text-muted-foreground">{ctx.isOwner ? "No one on your list yet." : "No one on this list yet."}</p>
             {ctx.isOwner && (
               <Button asChild>
                 <Link href="/app/people/new">Add the first person</Link>

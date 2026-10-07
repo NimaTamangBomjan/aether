@@ -12,14 +12,23 @@ export const metadata: Metadata = { title: "Person" };
 
 export default async function PersonPage({ params }: PageProps<"/app/people/[id]">) {
   const { id } = await params;
-  const ctx = await getListContext(`/app/people/${id}`);
+  const ctx = await getListContext();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
 
-  const [{ data: recipient }, { data: gifts }] = await Promise.all([
+  const [{ data: recipient }, { data: gifts }, { data: members }] = await Promise.all([
     ctx.supabase.from("recipients").select("*").eq("id", id).eq("list_id", ctx.list.id).maybeSingle(),
     ctx.supabase.from("gifts").select("*").eq("recipient_id", id).eq("list_id", ctx.list.id).order("created_at"),
+    ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id }),
   ]);
   if (!recipient) notFound();
+  const giftIds = (gifts ?? []).map((g) => g.id);
+  const { data: hidden } = giftIds.length
+    ? await ctx.supabase.from("gift_hidden_from").select("gift_id, user_id").in("gift_id", giftIds)
+    : { data: [] };
+  const names: Record<string, string> = {};
+  for (const m of members ?? []) names[m.user_id] = m.user_id === ctx.userId ? "you" : m.display_name || "a family member";
+  const hiddenFrom: Record<string, string[]> = {};
+  for (const h of hidden ?? []) (hiddenFrom[h.gift_id] ??= []).push(names[h.user_id] ?? "a family member");
 
   const age = AGE_RANGES.find((a) => a.value === recipient.age_range)?.label;
   const details = [recipient.relationship, age].filter(Boolean).join(" · ");
@@ -54,6 +63,10 @@ export default async function PersonPage({ params }: PageProps<"/app/people/[id]
         userId={ctx.userId}
         isOwner={ctx.isOwner}
         today={todayInTimeZone(ctx.profile.time_zone)}
+        timeZone={ctx.profile.time_zone}
+        names={names}
+        shared={(members ?? []).length > 1}
+        hiddenFrom={hiddenFrom}
       />
 
       {(recipient.interests.length > 0 || recipient.notes || recipient.dont_buy_notes) && (
