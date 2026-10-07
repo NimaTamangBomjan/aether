@@ -3,7 +3,7 @@
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
-- **Current stage:** fixing security review #1 findings, then 8: Landing page, SEO, legal, PWA
+- **Current stage:** 8: Landing page, SEO, legal pages, PWA (in progress)
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
 - **Last updated:** Oct 7, 2026
 
@@ -30,6 +30,45 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
 | Later | Paid plans (Vercel/Supabase/Resend Pro), Stripe live mode: owner does personally | deferred by owner |
+
+---
+
+## Security review #1 (CLAUDE.md §15) ✅ fixed (Oct 7)
+
+A separate review agent that didn't write the code checked every §15 item. It tested against the local stack with throwaway users and changed no files. Everything it found is fixed, and each fix has a regression test (`tests/db/security-review.test.ts`, plus unit tests). Migration: `20261014000000_security_review_1.sql`.
+
+| # | Finding | Fix |
+|---|---|---|
+| H1 | Someone could pre-register another person's email with a password (Supabase's password sign-up is public) and log in after the real person confirmed it. | When an email is confirmed, any password on the account is replaced with a random one. "Confirm email" is on (locally too; must stay on in production). A test reenacts the full attack; I proved the test fails with the defense switched off. |
+| H2 | Free accounts could run up AI costs: huge "interests" stored straight through the API, plus answers designed to fail so they don't count. | The database limits each interest to 30 characters. Every prompt field is trimmed before sending (a whole prompt stays under ~5,000 characters, even from 50 KB of stored text). A new cap of 30 AI attempts per person and 60 per list in any 24 hours, counting failures. Also: set a monthly spend limit in the Anthropic Console. |
+| M1 | Open redirect: `/.//evil.com` turned into `//evil.com` after normalization. | The check runs on the normalized result, and only `/app…` and `/join…` are allowed. Bypass payloads added to the tests. |
+| M2 | Sign-in codes were requested from our server, so Supabase's per-address limits would count *everyone* as one address (one abuser, or a busy launch day, could lock everyone out). | Code requests and checks now go straight from the person's browser. Codes expire after 15 minutes instead of 1 hour. Production rate limits and an optional CAPTCHA are on the production checklist. |
+| L1 | Members could tell from a count that someone hidden from them is on the list. | `list_plan()` counts only the people the viewer can see (owners see all). |
+| L2 | People could set an invite's expiry or creation date (bypassing the hourly limit), or fake a gift's activity line. | Insert permissions are limited to the columns people should set. Invites always start now and last 7 days. |
+| L3 | A gift could be "hidden from" someone not on the list. | The database checks they're on the list. |
+| L4 | A member could record someone else as the buyer. | Members can only record themselves; owners can record anyone on the list. The gift form only offers allowed choices. |
+| L5 | Webhook order and edge cases: a refund arriving before the payment, a later payment event after a refund, test-mode or $0.01 events. | A refund-first is remembered and blocks the grant. A payment after a refund never re-grants. The event must match the key's live/test mode, be in USD, and be at least $9.99. |
+| L6 | Database functions were runnable by anyone by default; new tables and functions would be open by default. | Execute revoked from the public role. Default privileges are closed, so anything new needs an explicit grant. A test lists every function anyone can run. |
+| L7 | Earlier idea titles sent back from the browser weren't scrubbed; other people's names on the list weren't removed; "José" didn't match "Jose". | All three fixed, plus inputs are trimmed before scrubbing. That also removed a slow-regex risk found while testing. |
+| L8 | No security headers. | Added: frame-ancestors none / X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS. |
+| L9 | Deleting a user outside the app (e.g. the dashboard) left an orphaned list. | When an owner's membership disappears, the earliest member becomes owner, or the list is deleted if nobody is left. |
+
+**Accepted (informational):**
+- Someone who already knows a hidden item's internal id can tell from an error message that it exists. The ids are random and never shown to them.
+- Login CSRF via email links is inherent to email sign-in.
+- The AI usage count is shared by the whole list.
+
+**Checklist after the fixes:** all PASS.
+- Row-level security on every table, with second-user tests.
+- Every action checks the user and their role.
+- Secrets are server-only.
+- The webhook verifies signatures and is idempotent.
+- Paid status comes only from the database.
+- Invites are random, expire, are single use, and only their hash is stored.
+- All input is validated and nothing is rendered as raw HTML.
+- No names or emails go to the AI.
+- Rate limits on login, AI and invites.
+- `npm audit --omit=dev`: 0 issues.
 
 ---
 
@@ -336,7 +375,7 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Playwright pinned to 1.56.1** to match the Chromium preinstalled in the container.
 - **Local Supabase runs only what we need:** database, auth, API gateway, REST, test inbox. Images come from Docker Hub because the default registry is blocked.
 - **Sign-in link:** verifies a one-time token (`token_hash`) rather than the browser-bound flow, so it works when the email opens in another browser or outside the installed app.
-- **Tests sign in test users with passwords created through the admin API.** The app itself never shows a password option.
+- **Test users sign in without passwords** (an admin-generated one-time link), the same way people do. Passwords are scrambled on confirmation anyway.
 - **Native pickers on phones:** relationship, age range and status use the phone's own picker (fast and familiar) instead of a custom dropdown.
 - **Money input** accepts "25", "24.99", "$1,299.99" and is stored as whole cents.
 - **Gift edits by members:** members can edit and delete only gifts they added. Status can be changed by anyone who can see the gift.
@@ -346,6 +385,16 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - **Invites are shared by link, not email, for now.** Maria texts it to her mom. The "family invite" email template comes with the other emails in Stage 6.
 - **Joiners choose the name** their family sees. Owners will edit theirs in Settings (Stage 7); until then it's the start of their email address.
 - **Linking yourself as a person:** the owner can no longer read that row back after linking (by design), so the app must not ask for the row back after saving that link.
+
+## Production setup checklist (Supabase dashboard; needed before launch)
+- **Auth → Providers → Email:** "Confirm email" ON (required by security fix H1); OTP expiry 900 seconds; leave the password minimum strong.
+- **Auth → Rate limits:** keep the defaults (or lower). Now that sign-in runs in the browser, they apply per visitor.
+- **Optional:** Auth → Bot protection → Cloudflare Turnstile (free) for the sign-in form. Needs a Turnstile site key; the code change is small.
+- **Auth → SMTP:** use Resend.
+- **Email templates:** use `supabase/templates/sign-in.html` for "Magic Link" and "Confirm signup".
+- **URL configuration:** Site URL = production URL; redirect URLs = production URL + `/**`.
+- **Database:** apply `supabase/migrations/*` in order (`supabase db push`).
+- **Anthropic Console:** set a monthly spend limit (e.g. $50).
 
 ## Known issues
 - **Real email not sent yet:** needs the Resend account, the API key and a verified sending domain (which needs the domain bought). Before launch, in the Supabase dashboard:

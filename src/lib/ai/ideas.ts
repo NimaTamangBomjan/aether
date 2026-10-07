@@ -34,9 +34,19 @@ export type IdeaRequest = {
   likedTitle?: string;
 };
 
+/** Earlier idea titles come back from the browser, so they're scrubbed and capped like everything else. */
+export function scrubTitles(titles: readonly string[], names: readonly string[]): string[] {
+  return titles.slice(-PROMPT_LIMITS.previous).map((t) => clip(t, PROMPT_LIMITS.title, names));
+}
+
 const EMAIL = /[^\s@<>()]+@[^\s@<>()]+\.[a-z]{2,}/gi;
 const URL_LIKE = /\b(?:https?:\/\/|www\.)\S+/gi;
 const PHONE = /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b/g;
+
+/** "José" → "Jose": names match however they're typed, and the AI gets plain text. */
+export function stripAccents(text: string) {
+  return text.normalize("NFD").replace(/\p{M}/gu, "");
+}
 
 function escapeRegExp(text: string) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -47,10 +57,10 @@ function escapeRegExp(text: string) {
  * phone numbers and links from free text before it goes to the AI.
  */
 export function scrubText(text: string, names: readonly string[]): string {
-  let out = text.replace(EMAIL, "[email]").replace(URL_LIKE, "[link]").replace(PHONE, "[phone]");
+  let out = stripAccents(text).replace(EMAIL, "[email]").replace(URL_LIKE, "[link]").replace(PHONE, "[phone]");
   const words = new Set<string>();
   for (const name of names) {
-    const full = name.trim();
+    const full = stripAccents(name).trim();
     if (full.length >= 2) words.add(full);
     for (const part of full.split(/[\s,.'’()-]+/)) if (part.length >= 3) words.add(part);
   }
@@ -60,6 +70,14 @@ export function scrubText(text: string, names: readonly string[]): string {
   }
   return out;
 }
+
+/** Hard limits on what goes into a prompt, whatever is stored (keeps every request small and cheap). */
+export const PROMPT_LIMITS = { relationship: 40, interest: 30, interests: 20, notes: 600, dontBuy: 400, title: 120, previous: 15 };
+
+const cap = (text: string, max: number) => (text.length > max ? text.slice(0, max) : text);
+
+/** Trims first (so scrubbing stays fast on any input), scrubs, then trims to the final size. */
+const clip = (text: string, max: number, names: readonly string[]) => cap(scrubText(cap(text, max * 2), names), max);
 
 export function buildProfile(
   recipient: {
@@ -76,10 +94,10 @@ export function buildProfile(
   const names = [recipient.name, ...otherNames];
   return {
     ageRange: recipient.age_range,
-    relationship: scrubText(recipient.relationship, names),
-    interests: recipient.interests.map((i) => scrubText(i, names)),
-    notes: scrubText(recipient.notes, names),
-    dontBuy: scrubText(recipient.dont_buy_notes, names),
+    relationship: clip(recipient.relationship, PROMPT_LIMITS.relationship, names),
+    interests: recipient.interests.slice(0, PROMPT_LIMITS.interests).map((i) => clip(i, PROMPT_LIMITS.interest, names)),
+    notes: clip(recipient.notes, PROMPT_LIMITS.notes, names),
+    dontBuy: clip(recipient.dont_buy_notes, PROMPT_LIMITS.dontBuy, names),
     remainingBudgetCents,
   };
 }

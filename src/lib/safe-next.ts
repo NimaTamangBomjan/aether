@@ -1,13 +1,21 @@
 const FALLBACK = "/app";
 
-/** Only allow redirects to paths on our own site (blocks "//evil.com" and full URLs). */
+// After signing in, people only ever need to land somewhere in the app or on an invite.
+const ALLOWED = /^\/(app|join)(\/|\?|#|$)/;
+
+/**
+ * Only allow redirects to our own app pages. The check runs on the normalized result, so tricks
+ * like "/.//evil.com" (which normalizes to "//evil.com") are rejected.
+ */
 export function safeNextPath(raw: string | null | undefined, fallback = FALLBACK): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return fallback;
+  if (!raw || !raw.startsWith("/")) return fallback;
   try {
     const base = "http://local.invalid";
     const url = new URL(raw, base);
     if (url.origin !== base) return fallback;
-    return url.pathname + url.search + url.hash;
+    const result = url.pathname + url.search + url.hash;
+    if (result.startsWith("//") || result.startsWith("/\\") || !ALLOWED.test(result)) return fallback;
+    return result;
   } catch {
     return fallback;
   }

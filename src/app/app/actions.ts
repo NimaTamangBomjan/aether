@@ -151,16 +151,16 @@ export async function saveGift(_prev: FormState, formData: FormData): Promise<Fo
     .from("gifts")
     .update({ ...rest, price_cents: price })
     .eq("id", id)
-    .select("recipient_id");
+    .select("recipient_id, list_id");
   if (error) {
-    return error.message.includes("BUYER_NOT_MEMBER")
-      ? { fieldErrors: { bought_by: "Choose someone who's on this list." } }
+    return /BUYER_NOT_(MEMBER|ALLOWED)/.test(error.message)
+      ? { fieldErrors: { bought_by: "You can record yourself as the buyer. The list owner can choose anyone." } }
       : { error: TRY_AGAIN };
   }
   if (!data?.length) return { error: "You can only edit gifts you added. You can still change their status." };
 
   // "Hide from": keep exactly the people ticked on the form (never yourself, only people on the list).
-  const { data: members } = await ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id });
+  const { data: members } = await ctx.supabase.rpc("list_member_names", { p_list: data[0].list_id });
   const memberIds = new Set((members ?? []).map((m) => m.user_id));
   const wanted = new Set(
     formData

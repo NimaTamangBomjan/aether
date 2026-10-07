@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { aiConfigured, generateIdeas } from "@/lib/ai/generate";
-import { buildProfile, type Idea } from "@/lib/ai/ideas";
+import { buildProfile, scrubTitles, type Idea } from "@/lib/ai/ideas";
 import { spentCents } from "@/lib/budget";
 import { getListContext } from "@/lib/data/list";
 import { dollarsToCents } from "@/lib/money";
@@ -109,19 +109,27 @@ export async function requestIdeas(input: z.input<typeof requestSchema>): Promis
           : `You've used all ${usage.cap} free idea requests. Get 100 more with the Season Pass for $9.99.`,
       };
     }
+    if (reserveError?.message.includes("AI_DAILY_LIMIT")) {
+      return { ok: false, code: "rate", usage, message: "You've asked for a lot of ideas today. Please try again tomorrow." };
+    }
     if (reserveError?.message.includes("AI_RATE_LIMIT")) {
       return { ok: false, code: "rate", usage, message: "That's a lot of ideas in one minute! Wait a moment, then try again." };
     }
     return { ok: false, code: "failed", usage, message: FAILED };
   }
 
-  const { data: members } = await ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id });
-  const profile = buildProfile(recipient, (members ?? []).map((m) => m.display_name), remaining);
+  // Every name we know on this list is removed: the family's and every person's on it.
+  const [{ data: members }, { data: people }] = await Promise.all([
+    ctx.supabase.rpc("list_member_names", { p_list: ctx.list.id }),
+    ctx.supabase.from("recipients").select("name").eq("list_id", ctx.list.id),
+  ]);
+  const names = [...(members ?? []).map((m) => m.display_name), ...(people ?? []).map((p) => p.name)].filter(Boolean);
+  const profile = buildProfile(recipient, names, remaining);
   const result = await generateIdeas({
     profile,
     kind: req.kind,
-    previousTitles: req.previousTitles,
-    likedTitle: req.likedTitle,
+    previousTitles: scrubTitles(req.previousTitles, [recipient.name, ...names]),
+    likedTitle: req.likedTitle ? scrubTitles([req.likedTitle], [recipient.name, ...names])[0] : undefined,
   });
 
   await admin.rpc("finish_ai_request", {

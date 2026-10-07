@@ -1,36 +1,66 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
+import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sendCode, verifyCode, type SignInState } from "./actions";
+import { createClient } from "@/lib/supabase/client";
+
+const emailSchema = z.string().trim().toLowerCase().pipe(z.email());
+
+function friendlySendError(message: string, status?: number) {
+  return status === 429 || /rate|seconds|security purposes/i.test(message)
+    ? "Too many tries. Wait a minute, then try again."
+    : "We couldn't send the email. Check the address and try again.";
+}
 
 export function SignInForm({ next, linkError }: { next: string; linkError: boolean }) {
-  const initial: SignInState = {
-    step: "email",
-    email: "",
-    next,
-    error: linkError ? "That sign-in link has expired or was already used. Enter your email to get a new code." : undefined,
-  };
-  const [emailState, emailAction, sending] = useActionState(sendCode, initial);
-  const [codeState, codeAction, verifying] = useActionState(verifyCode, initial);
-  const [editingEmail, setEditingEmail] = useState(false);
+  const router = useRouter();
+  const [step, setStep] = useState<"email" | "code">("email");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(
+    linkError ? "That sign-in link has expired or was already used. Enter your email to get a new code." : null,
+  );
+  const [notice, setNotice] = useState<string | null>(null);
+  const [sending, startSending] = useTransition();
+  const [verifying, startVerifying] = useTransition();
 
-  const onCodeStep = emailState.step === "code" && !editingEmail;
+  function sendCode(e?: FormEvent) {
+    e?.preventDefault();
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) return setError("Please enter a valid email address.");
+    startSending(async () => {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+      const { error: sendError } = await createClient().auth.signInWithOtp({
+        email: parsed.data,
+        options: { shouldCreateUser: true, emailRedirectTo: `${appUrl}/auth/confirm?next=${encodeURIComponent(next)}` },
+      });
+      if (sendError) return setError(friendlySendError(sendError.message, sendError.status));
+      setEmail(parsed.data);
+      setError(null);
+      setNotice(`We sent a 6-digit code to ${parsed.data}.`);
+      setStep("code");
+    });
+  }
 
-  if (!onCodeStep) {
+  function verify(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const code = String(new FormData(e.currentTarget).get("code") ?? "").trim();
+    if (!/^\d{6}$/.test(code)) return setError("The code is the 6 numbers in the email.");
+    startVerifying(async () => {
+      const { error: verifyError } = await createClient().auth.verifyOtp({ email, token: code, type: "email" });
+      if (verifyError) return setError("That code didn't work. Use the newest email, or send a new code.");
+      router.replace(next);
+      router.refresh();
+    });
+  }
+
+  if (step === "email") {
     return (
-      <form
-        action={(fd) => {
-          setEditingEmail(false);
-          emailAction(fd);
-        }}
-        className="space-y-4"
-        noValidate
-      >
-        <input type="hidden" name="next" value={next} />
+      <form onSubmit={sendCode} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="email">Your email</Label>
           <Input
@@ -40,14 +70,15 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
             inputMode="email"
             autoComplete="email"
             required
-            defaultValue={emailState.email}
-            aria-invalid={Boolean(emailState.error)}
-            aria-describedby={emailState.error ? "email-error" : undefined}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? "email-error" : undefined}
           />
         </div>
-        {emailState.error && (
+        {error && (
           <p id="email-error" role="alert" className="text-sm text-over-foreground">
-            {emailState.error}
+            {error}
           </p>
         )}
         <Button type="submit" className="w-full" disabled={sending}>
@@ -62,15 +93,12 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
     );
   }
 
-  const error = codeState.error;
   return (
     <div className="space-y-4">
       <p role="status" className="text-base">
-        {emailState.notice} Type it below, or tap the button in the email.
+        {notice} Type it below, or tap the button in the email.
       </p>
-      <form action={codeAction} className="space-y-4" noValidate>
-        <input type="hidden" name="next" value={next} />
-        <input type="hidden" name="email" value={emailState.email} />
+      <form onSubmit={verify} className="space-y-4" noValidate>
         <div className="space-y-2">
           <Label htmlFor="code">6-digit code</Label>
           <Input
@@ -97,14 +125,18 @@ export function SignInForm({ next, linkError }: { next: string; linkError: boole
         </Button>
       </form>
       <div className="flex flex-wrap gap-2">
-        <form action={emailAction}>
-          <input type="hidden" name="next" value={next} />
-          <input type="hidden" name="email" value={emailState.email} />
-          <Button type="submit" variant="ghost" size="sm" disabled={sending}>
-            {sending ? "Sending…" : "Send a new code"}
-          </Button>
-        </form>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingEmail(true)}>
+        <Button type="button" variant="ghost" size="sm" disabled={sending} onClick={() => sendCode()}>
+          {sending ? "Sending…" : "Send a new code"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            setStep("email");
+            setError(null);
+          }}
+        >
           Use a different email
         </Button>
       </div>

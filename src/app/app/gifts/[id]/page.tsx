@@ -40,6 +40,9 @@ export default async function EditGiftPage({ params }: PageProps<"/app/gifts/[id
           hiddenFrom={(hidden ?? []).map((h) => h.user_id)}
           linkedName={linked ? linked.display_name || "That family member" : undefined}
           members={(members ?? []).map((m) => ({ id: m.user_id, name: m.user_id === ctx.userId ? "Me" : m.display_name || "Family member" }))}
+          buyerOptions={(members ?? [])
+            .filter((m) => ctx.isOwner || m.user_id === ctx.userId || m.user_id === gift.bought_by)
+            .map((m) => ({ id: m.user_id, name: m.user_id === ctx.userId ? "Me" : m.display_name || "Family member" }))}
         />
       ) : (
         <p className="text-muted-foreground">

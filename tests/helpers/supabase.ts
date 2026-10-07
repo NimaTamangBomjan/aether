@@ -17,20 +17,26 @@ export const anon = (): SupabaseClient<Database> => createClient<Database>(url, 
 
 export type TestUser = { id: string; email: string; client: SupabaseClient<Database>; listId: string };
 
-/** Creates a confirmed user and returns a client signed in as them, plus their own list id. */
+/**
+ * Creates a confirmed user and returns a client signed in as them (passwordless, the same way
+ * real people sign in), plus their own list id.
+ */
 export async function createTestUser(label: string): Promise<TestUser> {
   const email = `${label}-${randomUUID().slice(0, 8)}@test.giftledger.local`;
-  const password = randomBytes(16).toString("hex");
   const { data, error } = await admin.auth.admin.createUser({
     email,
-    password,
     email_confirm: true,
     user_metadata: { full_name: label },
   });
   if (error || !data.user) throw error ?? new Error("createUser failed");
 
   const client = anon();
-  const { error: signInError } = await client.auth.signInWithPassword({ email, password });
+  const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email });
+  if (linkError) throw linkError;
+  const { error: signInError } = await client.auth.verifyOtp({
+    token_hash: link.properties.hashed_token,
+    type: "magiclink",
+  });
   if (signInError) throw signInError;
 
   const { data: membership, error: listError } = await client
@@ -50,7 +56,7 @@ export async function deleteTestUser(user: TestUser | undefined) {
   await admin.auth.admin.deleteUser(user.id);
 }
 
-/** Creates an invite the way the app will: random token, only its hash stored. */
+/** Creates an invite the way the app does: random token, only its hash stored. */
 export async function createInvite(owner: TestUser, opts: { expired?: boolean } = {}) {
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
@@ -58,9 +64,15 @@ export async function createInvite(owner: TestUser, opts: { expired?: boolean } 
     list_id: owner.listId,
     token_hash: tokenHash,
     created_by: owner.id,
-    ...(opts.expired ? { expires_at: new Date(Date.now() - 1000).toISOString() } : {}),
   });
   if (error) throw error;
+  if (opts.expired) {
+    const { error: e } = await admin
+      .from("invites")
+      .update({ expires_at: new Date(Date.now() - 1000).toISOString() })
+      .eq("token_hash", tokenHash);
+    if (e) throw e;
+  }
   return token;
 }
 

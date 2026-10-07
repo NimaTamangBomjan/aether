@@ -36,8 +36,17 @@ export type WebhookAction =
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Decides what a verified Stripe event means for us. Pure, so it's easy to test. */
-export function interpretEvent(event: Stripe.Event): WebhookAction {
+/** The Season Pass price in cents. A checkout for less than this never grants a pass. */
+export const SEASON_PASS_CENTS = 999;
+
+/**
+ * Decides what a verified Stripe event means for us. Pure, so it's easy to test.
+ * `expectLivemode` (from the secret key) stops a test-mode event unlocking anything in production.
+ */
+export function interpretEvent(event: Stripe.Event, expectLivemode?: boolean): WebhookAction {
+  if (expectLivemode !== undefined && event.livemode !== expectLivemode) {
+    return { kind: "ignore", reason: "wrong mode" };
+  }
   switch (event.type) {
     case "checkout.session.completed":
     case "checkout.session.async_payment_succeeded": {
@@ -46,6 +55,9 @@ export function interpretEvent(event: Stripe.Event): WebhookAction {
       if (session.mode !== "payment") return { kind: "ignore", reason: "not a one-time payment" };
       // Some payment methods confirm later; we'll get async_payment_succeeded then.
       if (session.payment_status !== "paid") return { kind: "ignore", reason: "not paid yet" };
+      if ((session.currency ?? "").toLowerCase() !== "usd" || (session.amount_total ?? 0) < SEASON_PASS_CENTS) {
+        return { kind: "ignore", reason: "unexpected amount" };
+      }
       const userId = session.client_reference_id ?? session.metadata?.user_id ?? "";
       if (!UUID.test(userId)) return { kind: "ignore", reason: "no user" };
       const paymentIntent =
@@ -57,7 +69,7 @@ export function interpretEvent(event: Stripe.Event): WebhookAction {
         paymentIntent,
         userId,
         amount: session.amount_total ?? 0,
-        currency: session.currency ?? "usd",
+        currency: "usd",
       };
     }
     case "charge.refunded": {

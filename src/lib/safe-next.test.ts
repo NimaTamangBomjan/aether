@@ -11,6 +11,17 @@ describe("safeNextPath", () => {
       expect(safeNextPath(bad)).toBe("/app");
     }
   });
+  it("rejects tricks that only become //evil.com after normalizing (security review #1, M1)", () => {
+    for (const bad of ["/.//evil.com", "/..//evil.com", "/%2e//evil.com", "/./\\evil.com", "/app/..//evil.com", "/.//evil.example/phish"]) {
+      expect(safeNextPath(bad)).toBe("/app");
+    }
+  });
+  it("only allows app and invite pages", () => {
+    expect(safeNextPath("/settings")).toBe("/app");
+    expect(safeNextPath("/application")).toBe("/app");
+    expect(safeNextPath("/app?x=1")).toBe("/app?x=1");
+    expect(safeNextPath("/join/abc")).toBe("/join/abc");
+  });
 });
 
 describe("nextFromConfirmParams", () => {

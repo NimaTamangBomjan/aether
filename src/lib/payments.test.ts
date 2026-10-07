@@ -67,6 +67,18 @@ describe("webhook events", () => {
     expect(interpretEvent(event)).toEqual({ kind: "refunded", eventId: "evt_2", paymentIntent: "pi_1", amountRefunded: 999, amount: 999 });
   });
 
+  it("ignores test-mode events in live mode and vice versa (security review #1, L5)", () => {
+    const testEvent = { ...sessionEvent(), livemode: false } as Stripe.Event;
+    expect(interpretEvent(testEvent, true)).toMatchObject({ kind: "ignore", reason: "wrong mode" });
+    expect(interpretEvent(testEvent, false).kind).toBe("paid");
+    expect(interpretEvent(testEvent).kind).toBe("paid");
+  });
+
+  it("ignores checkouts for less than the Season Pass price or in another currency", () => {
+    expect(interpretEvent(sessionEvent({ amount_total: 1 }))).toMatchObject({ kind: "ignore", reason: "unexpected amount" });
+    expect(interpretEvent(sessionEvent({ currency: "eur" }))).toMatchObject({ kind: "ignore", reason: "unexpected amount" });
+  });
+
   it("ignores other events", () => {
     expect(interpretEvent({ id: "evt_3", type: "customer.created", data: { object: {} } } as unknown as Stripe.Event)).toMatchObject({ kind: "ignore" });
   });

@@ -45,8 +45,13 @@ test("owner invites a family member who joins, sees the list and marks a gift bo
   await m.getByTestId("gift").filter({ hasText: "Wool scarf" }).getByRole("button", { name: "Mark bought" }).click();
   await expect(m.getByTestId("gift").filter({ hasText: "Wool scarf" }).getByText("Bought", { exact: true })).toBeVisible();
 
-  await page.goto(personUrl);
-  await expect(page.getByTestId("activity").first()).toContainText(`Marked bought by ${member.name}`);
+  // The member's screen updates instantly; wait until the save has reached the server.
+  await expect
+    .poll(async () => {
+      await page.goto(personUrl);
+      return page.getByTestId("activity").first().textContent();
+    })
+    .toContain(`Marked bought by ${member.name}`);
   await page.goto("/app/family");
   await expect(page.getByText(member.name)).toBeVisible();
   await expect(page.getByText("Your free plan includes 1 family member.")).toBeVisible();

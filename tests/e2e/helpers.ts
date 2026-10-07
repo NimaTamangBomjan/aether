@@ -9,7 +9,12 @@ export const test = base.extend<{ consoleProblems: string[] }>({
     async ({ page }, use) => {
       const problems: string[] = [];
       page.on("console", (msg) => {
-        if (msg.type() === "error" || msg.type() === "warning") problems.push(`${msg.type()}: ${msg.text()}`);
+        if (msg.type() !== "error" && msg.type() !== "warning") return;
+        // A wrong or used sign-in code is rejected by the sign-in service itself (status 4xx), and the
+        // browser logs that response. That's the expected unhappy path, not an app error.
+        const expectedAuthRejection =
+          msg.text().startsWith("Failed to load resource") && /\/auth\/v1\/verify/.test(msg.location().url);
+        if (!expectedAuthRejection) problems.push(`${msg.type()}: ${msg.text()} (${msg.location().url})`);
       });
       page.on("pageerror", (err) => problems.push(`pageerror: ${err.message}`));
       await use(problems);

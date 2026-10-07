@@ -20,6 +20,7 @@ export function GiftForm({
   meId,
   hiddenFrom,
   linkedName,
+  buyerOptions,
 }: {
   gift: Gift;
   today: string;
@@ -28,6 +29,8 @@ export function GiftForm({
   hiddenFrom: string[];
   /** The family member this gift's person is linked to; they never see it anyway. */
   linkedName?: string;
+  /** Owners can record anyone on the list as the buyer; members only themselves. */
+  buyerOptions: { id: string; name: string }[];
 }) {
   const [state, action, pending] = useActionState<FormState, FormData>(saveGift, {});
   const [status, setStatus] = useState(gift.status);
@@ -81,11 +84,11 @@ export function GiftForm({
           </NativeSelect>
         </Field>
 
-        {status !== "idea" && members.length > 0 && (
+        {status !== "idea" && buyerOptions.length > 0 && (
           <Field id="bought_by" label="Bought by" error={e.bought_by}>
             <NativeSelect id="bought_by" name="bought_by" defaultValue={gift.bought_by ?? meId}>
               <option value="">Not set</option>
-              {members.map((m) => (
+              {buyerOptions.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
                 </option>

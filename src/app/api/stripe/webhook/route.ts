@@ -22,7 +22,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid signature" }, { status: 400 });
   }
 
-  const action = interpretEvent(event);
+  const key = serverEnv().STRIPE_SECRET_KEY;
+  const action = interpretEvent(event, key ? key.startsWith("sk_live_") || key.startsWith("rk_live_") : undefined);
   const admin = createAdminClient();
 
   if (action.kind === "paid") {
