@@ -20,9 +20,16 @@ export function ConfirmSignIn() {
     const type = params.get("type") as EmailOtpType | null;
     const next = nextFromConfirmParams(new URLSearchParams(params.toString()), process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin);
     const fail = () => router.replace(`/sign-in?error=link&next=${encodeURIComponent(next)}`);
-    if (!tokenHash || !type || !ALLOWED_TYPES.includes(type)) return fail();
-    createClient()
-      .auth.verifyOtp({ type, token_hash: tokenHash })
+    const code = params.get("code");
+    // Supabase's default email (used until custom email is set up) sends a one-time code that
+    // only works in the browser where sign-in started. Our own email sends a token that works anywhere.
+    const signIn = code
+      ? createClient().auth.exchangeCodeForSession(code)
+      : tokenHash && type && ALLOWED_TYPES.includes(type)
+        ? createClient().auth.verifyOtp({ type, token_hash: tokenHash })
+        : null;
+    if (!signIn) return fail();
+    signIn
       .then(({ error }) => {
         if (error) return fail();
         router.replace(next);

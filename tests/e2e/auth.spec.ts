@@ -99,3 +99,21 @@ test("Google sign-in stays hidden until it's set up, and a failed return explain
   await expect(page).toHaveURL(/\/sign-in\?error=google/);
   await expect(page.getByRole("alert").filter({ hasText: "Google sign-in didn't finish." })).toBeVisible();
 });
+
+test("Supabase's default sign-in email link also works (used until custom email is set up)", async ({ page, baseURL }) => {
+  const email = uniqueEmail("defaultlink");
+  const before = await emailCount(email);
+  await page.goto("/sign-in?next=/app");
+  await page.getByLabel("Your email").fill(email);
+  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
+  await expect(page.getByLabel("6-digit code")).toBeVisible();
+  const ours = new URL(linkFrom(await latestEmail(email, before)));
+
+  // The default template links to Supabase's own verify page, which sends people back with a one-time code.
+  const verify = new URL("http://127.0.0.1:54321/auth/v1/verify");
+  verify.searchParams.set("token", ours.searchParams.get("token_hash")!);
+  verify.searchParams.set("type", "signup");
+  verify.searchParams.set("redirect_to", `${baseURL}/auth/confirm?next=/app`);
+  await page.goto(verify.toString());
+  await expect(page).toHaveURL(/\/app(\/welcome)?$/);
+});
