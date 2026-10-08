@@ -27,7 +27,9 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 | By Oct 15 | Anthropic API key → cloud environment as `APP_ANTHROPIC_API_KEY` (owner adds credits personally) | waiting |
 | By Oct 15 | Allow domains in the cloud environment's network settings: `*.supabase.co`, `api.supabase.com`, `*.stripe.com`, `*.stripe.network`, `*.stripecdn.com`, `api.resend.com`, `*.posthog.com`, `*.sentry.io` | waiting |
 | By Oct 21 | Stripe test keys + Season Pass price ID → cloud environment | waiting |
-| By Oct 14–17 | Supabase project (US East) + Vercel connected to GitHub | waiting |
+| Done (Oct 8) | Supabase project `ylnchyhiuxfgtxmiuuyw` (US East, free plan): database set up from `supabase/production-setup.sql`; email sign-in settings (confirm email, secure password change, OTP 900 s); Site URL and redirect URL set | ✅ |
+| Done (Oct 8) | Vercel project `giftledger` (Hobby): https://giftledger-iota.vercel.app deploys from `main`, with the Supabase URL, anon key, service-role key and app URL set | ✅ |
+| Waiting on domain + Resend | Supabase email templates can only be edited after custom SMTP (Resend) is on, so sign-in emails still use Supabase's default and its tiny sending limit. Sign-in on the live site isn't reliable until then | waiting |
 | By Oct 18 | Google Cloud sign-in setup (Claude sends steps) | waiting |
 | By Oct 21 | Cloudflare account (free) → Turnstile widget: Site Key → Vercel `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, Secret Key → Supabase CAPTCHA (README step 1.9) | waiting |
 | By Oct 20 | Final name + domain (owner buys) | waiting |
