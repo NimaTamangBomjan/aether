@@ -25,8 +25,10 @@ export async function startCheckout(): Promise<{ error: string } | void> {
       checkoutSessionParams({ userId: ctx.userId, email: ctx.email, appUrl: env.NEXT_PUBLIC_APP_URL, priceId }),
     );
     url = session.url;
-  } catch {
-    console.error("stripe_checkout_create_failed");
+  } catch (err) {
+    // Stripe's error type and code only (e.g. invalid_request_error / resource_missing), never personal details.
+    const e = err as { type?: string; code?: string; param?: string };
+    console.error(`stripe_checkout_create_failed type=${e.type ?? "unknown"} code=${e.code ?? "none"} param=${e.param ?? "none"}`);
   }
   if (!url) return { error: "Couldn't open checkout. Please try again in a moment. You haven't been charged." };
   trackServer(ctx.userId, "checkout_started");
