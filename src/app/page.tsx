@@ -17,8 +17,14 @@ const HEADLINE = "Stop overspending on holiday gifts.";
 const SUBHEAD =
   "Give everyone on your list a budget and see your total as you shop. Share one list with your family so nobody buys the same gift twice, and the surprises stay secret.";
 
-// From LendingTree's 2025 holiday debt survey (see PROGRESS.md; the owner confirms before launch).
-const STAT = { figure: "48%", text: "of parents went into debt for the holidays last year: $1,324 on average.", source: "LendingTree, 2025" };
+// LendingTree's 2025 holiday debt survey (2,032 US adults, Dec 10–15, 2025): 48% of parents of kids
+// under 18 took on holiday debt, averaging $1,324. Checked against the source on Oct 8, 2026.
+const STAT = {
+  figure: "48%",
+  text: "of parents with kids at home took on debt for the holidays last season: $1,324 on average.",
+  source: "LendingTree, 2025",
+  url: "https://www.lendingtree.com/credit-cards/study/holiday-debt-tariffs/",
+};
 
 const COMPARISON: { feature: string; us: boolean; sheet: boolean; wishlist: boolean }[] = [
   { feature: "A budget for each person, with a running total", us: true, sheet: true, wishlist: false },
@@ -134,7 +140,9 @@ export default function Home() {
             </div>
             <p className="rounded-xl bg-secondary/60 p-4">
               <span className="text-2xl font-bold text-primary">{STAT.figure}</span> {STAT.text}{" "}
-              <span className="text-sm text-muted-foreground">({STAT.source})</span>
+              <a href={STAT.url} className="text-sm text-muted-foreground underline underline-offset-4" rel="noopener noreferrer" target="_blank">
+                ({STAT.source})
+              </a>
             </p>
           </div>
           <div className="mx-auto w-full max-w-xs">

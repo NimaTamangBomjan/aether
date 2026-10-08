@@ -97,7 +97,7 @@ Based on the competitor research (about 20 products; none combines per-person bu
   - A. "Stop overspending on holiday gifts."
   - B. "One budget for every gift. One list for the whole family."
   - C. "Know what you've spent, what's covered, and what's left."
-- **The statistic** "48% of parents went into debt for the holidays last year: $1,324 on average (LendingTree, 2025)": confirm it on lendingtree.com before launch, or tell Claude to remove it. NRF's 2026 survey (mid-October) can replace it.
+- **The statistic:** ✅ checked against LendingTree's survey page on Oct 8 (48% of parents of kids under 18 took on holiday debt, averaging $1,324; 2,032 US adults, Dec 2025). The page links to the source. NRF's 2026 survey (mid-October) could replace it later.
 - **Sign-up goal:** apps like this usually convert 2–5% of free users, so 100 passes likely needs 2,000–3,300 sign-ups, not 1,000.
 - **Black Friday price** (optional).
 - **Change freeze:** bug fixes only from Nov 10 to Dec 24 (competitors' worst reviews come from buggy updates in December).
