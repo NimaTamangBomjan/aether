@@ -90,6 +90,8 @@ Based on the competitor research (about 20 products; none combines per-person bu
   - "One missed return pays for it";
   - two new FAQs (less-techy parents, adding from a store's website).
 
+**Checks:** typecheck, lint and build pass. 183 unit and database tests pass (+3 for pasted links). 118 browser tests pass at phone and desktop sizes (+12 in `tests/e2e/easier.spec.ts`), with 4 skipped (real Stripe). Also fixed an old test-helper bug: it matched headings by partial name, so a person named "E" matched "Add a person".
+
 **Owner to decide or check**
 - **Headline** (pick one; option A is live now):
   - A. "Stop overspending on holiday gifts."

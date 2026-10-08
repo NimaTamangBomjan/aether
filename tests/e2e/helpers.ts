@@ -124,7 +124,7 @@ export async function addPerson(page: Page, name: string, budget?: string) {
   await page.getByLabel("Name", { exact: true }).fill(name);
   if (budget) await page.getByLabel("Budget for this person").fill(budget);
   await page.getByRole("button", { name: "Add person" }).click();
-  await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name, level: 1, exact: true })).toBeVisible();
 }
 
 export async function quickAddGift(page: Page, title: string, price?: string) {

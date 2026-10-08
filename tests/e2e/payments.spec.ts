@@ -86,7 +86,7 @@ test("paying unlocks the pass within seconds; a refund takes it away without hid
   await page.goto("/app");
   await expect(page.getByText("You've added 5 people.")).toBeVisible();
   for (const name of ["A", "B", "C", "D", "E", "Sixth person"]) {
-    await expect(page.getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("link", { name: new RegExp(`^${name}`) })).toBeVisible();
   }
 });
 
