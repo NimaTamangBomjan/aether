@@ -128,7 +128,7 @@ export async function addPerson(page: Page, name: string, budget?: string) {
 }
 
 export async function quickAddGift(page: Page, title: string, price?: string) {
-  await page.getByPlaceholder("What's the gift?").fill(title);
+  await page.getByLabel("Gift", { exact: true }).fill(title);
   if (price) await page.getByLabel("Price").fill(price);
   await page.getByRole("button", { name: "Add gift" }).click();
   await expect(page.getByTestId("gift").filter({ hasText: title })).toBeVisible();

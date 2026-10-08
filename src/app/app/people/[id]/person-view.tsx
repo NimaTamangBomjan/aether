@@ -34,6 +34,7 @@ export function PersonView({
   names,
   shared,
   hiddenFrom,
+  remindersOn,
 }: {
   recipient: Recipient;
   gifts: Gift[];
@@ -44,6 +45,8 @@ export function PersonView({
   names: Record<string, string>;
   shared: boolean;
   hiddenFrom: Record<string, string[]>;
+  /** Return reminders are a Season Pass feature of the list. */
+  remindersOn: boolean;
 }) {
   const [optimisticGifts, setOptimisticStatus] = useOptimistic(
     gifts,
@@ -116,6 +119,7 @@ export function PersonView({
                         {gift.store ? ` · ${gift.store}` : ""}
                       </p>
                       <ReturnLine gift={gift} today={today} />
+                      {!remindersOn && isOwner && <ReminderTeaser gift={gift} today={today} />}
                       {shared && <ActivityLine gift={gift} names={names} timeZone={timeZone} />}
                       {hiddenFrom[gift.id]?.length ? (
                         <p className="text-sm text-muted-foreground">Hidden from {hiddenFrom[gift.id].join(", ")}</p>
@@ -187,6 +191,20 @@ function ReturnLine({ gift, today }: { gift: Gift; today: string }) {
   );
 }
 
+/** On free lists: a bought gift with a return date is the moment a reminder is worth paying for. */
+function ReminderTeaser({ gift, today }: { gift: Gift; today: string }) {
+  if (!gift.return_by || (gift.status !== "bought" && gift.status !== "wrapped")) return null;
+  if (daysBetween(today, gift.return_by) < 3) return null;
+  return (
+    <p className="mt-1 text-sm">
+      <Link href="/app/upgrade" className="font-medium text-primary underline underline-offset-4">
+        Email me 3 days before the return window closes
+      </Link>{" "}
+      <span className="text-muted-foreground">(Season Pass)</span>
+    </p>
+  );
+}
+
 function QuickAdd({ recipientId }: { recipientId: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(addQuickGift, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -203,12 +221,13 @@ function QuickAdd({ recipientId }: { recipientId: string }) {
     <form ref={formRef} action={action} className="space-y-2 rounded-xl border bg-secondary/50 p-4" noValidate>
       <input type="hidden" name="recipient_id" value={recipientId} />
       <p className="font-semibold">Add a gift idea</p>
+      <p className="text-sm text-muted-foreground">Type what it is, or paste a link from any store.</p>
       <div className="flex gap-2">
         <div className="min-w-0 flex-1">
           <Label htmlFor="quick-title" className="sr-only">
             Gift
           </Label>
-          <Input id="quick-title" name="title" placeholder="What's the gift?" maxLength={120} autoComplete="off" required aria-invalid={Boolean(state.fieldErrors?.title)} />
+          <Input id="quick-title" name="title" placeholder="Gift name, or paste a link" maxLength={2000} autoComplete="off" required aria-invalid={Boolean(state.fieldErrors?.title)} />
         </div>
         <div className="w-28">
           <Label htmlFor="quick-price" className="sr-only">

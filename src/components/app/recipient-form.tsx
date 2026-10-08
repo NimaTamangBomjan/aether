@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { saveRecipient, type FormState } from "@/app/app/actions";
 import { describedBy, Field } from "@/components/app/field";
 import { MoneyInput } from "@/components/app/money-input";
@@ -31,6 +31,7 @@ export function RecipientForm({
     recipient?.relationship ? (known ? recipient.relationship : OTHER) : "",
   );
   const e = state.fieldErrors ?? {};
+  const budgetRef = useRef<HTMLInputElement>(null);
 
   return (
     <form action={action} className="space-y-5" noValidate>
@@ -70,19 +71,46 @@ export function RecipientForm({
       )}
 
       <Field id="budget" label="Budget for this person" hint="Optional. Leave empty if you're not sure yet." error={e.budget}>
-        <MoneyInput id="budget" name="budget" defaultValue={centsToInput(recipient?.budget_cents)} {...describedBy("budget", e.budget, "x")} />
+        <MoneyInput ref={budgetRef} id="budget" name="budget" defaultValue={centsToInput(recipient?.budget_cents)} {...describedBy("budget", e.budget, "x")} />
       </Field>
+      <div role="group" className="-mt-3 flex flex-wrap gap-2" aria-label="Quick budgets">
+        {[25, 50, 100].map((amount) => (
+          <Button
+            key={amount}
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (budgetRef.current) budgetRef.current.value = String(amount);
+            }}
+          >
+            ${amount}
+          </Button>
+        ))}
+      </div>
 
-      <Field id="age_range" label="Age range" hint="Helps with gift ideas." error={e.age_range}>
-        <NativeSelect id="age_range" name="age_range" defaultValue={recipient?.age_range ?? ""} {...describedBy("age_range", e.age_range, "x")}>
-          <option value="">Not sure</option>
-          {AGE_RANGES.map((a) => (
-            <option key={a.value} value={a.value}>
+      <fieldset className="space-y-2" aria-describedby={e.age_range ? "age_range-error" : "age_range-hint"}>
+        <legend className="text-sm font-medium">Age range</legend>
+        <p id="age_range-hint" className="text-sm text-muted-foreground">
+          Helps with gift ideas.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {[{ value: "", label: "Not sure" }, ...AGE_RANGES].map((a) => (
+            <label
+              key={a.value || "unsure"}
+              className="flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm has-checked:border-primary has-checked:bg-primary has-checked:text-primary-foreground has-focus-visible:ring-[3px] has-focus-visible:ring-ring/50"
+            >
+              <input type="radio" name="age_range" value={a.value} defaultChecked={(recipient?.age_range ?? "") === a.value} className="sr-only" />
               {a.label}
-            </option>
+            </label>
           ))}
-        </NativeSelect>
-      </Field>
+        </div>
+        {e.age_range && (
+          <p id="age_range-error" role="alert" className="text-sm text-over-foreground">
+            {e.age_range}
+          </p>
+        )}
+      </fieldset>
 
       <Field id="interests" label="Interests" hint="Press Enter or comma after each one." error={e.interests}>
         <TagInput id="interests" name="interests" defaultValue={recipient?.interests ?? []} describedBy={e.interests ? "interests-error" : "interests-hint"} />

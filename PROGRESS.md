@@ -5,7 +5,7 @@ Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 ## Where we are
 - **Current stage:** 10 ✅ built and tested. All 10 stages are done; what's left needs the owner (keys, accounts, domain, headline, legal review, purchases). See "Needs from the owner" and the launch checklist below.
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
-- **Last updated:** Oct 8, 2026
+- **Last updated:** Oct 8, 2026 (Stage 11 added after the competitor research)
 
 ## How to resume in a fresh session
 ```bash
@@ -69,6 +69,36 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 - Daily Supabase backups: ⏳ Supabase Pro (owner).
 - Sentry alerts to email: ⏳ owner setting (README step 7).
 - `LAUNCH.md`: ✅
+
+---
+
+## Stage 11: Standing out from competitors ✅ (Oct 8)
+
+Based on the competitor research (about 20 products; none combines per-person budgets, family sharing with hidden gifts, AI ideas and return reminders):
+- **Paste a link to add a gift:** paste any store link into "Add a gift"; the title, store and link fill in (from the web address only, no scraping). `src/lib/paste-link.ts`.
+- **Return-reminder upgrade moment:** on free lists, a bought gift with a return date offers "Email me 3 days before the return window closes" (owners only). It joins the existing prompts at the 6th person and the 2nd family member.
+- **Invites:** on phones the main button opens the phone's Share menu with a friendly message; copy link is second.
+- **Live updates:** shared lists refresh every 30 seconds while open, and right away when you come back to the app, so "bought" shows up for everyone.
+- **Trust:** every app page says it's saved as you go, with a "Download a copy" link.
+- **Easier forms:** age range is now tap-friendly buttons; one-tap $25 / $50 / $100 budgets.
+- **Home-screen tip:** iPhone visitors are shown how to add it to the home screen (dismissible); Android gets an "Add to home screen" button.
+- **Landing page:**
+  - budget-first subhead, plus a debt statistic;
+  - an "It's not too late" line;
+  - a comparison table (GiftLedger vs spreadsheet vs wish-list apps);
+  - "Our promises" (no ads or shopping links, one price, your list is safe, surprises stay surprises);
+  - "One missed return pays for it";
+  - two new FAQs (less-techy parents, adding from a store's website).
+
+**Owner to decide or check**
+- **Headline** (pick one; option A is live now):
+  - A. "Stop overspending on holiday gifts."
+  - B. "One budget for every gift. One list for the whole family."
+  - C. "Know what you've spent, what's covered, and what's left."
+- **The statistic** "48% of parents went into debt for the holidays last year: $1,324 on average (LendingTree, 2025)": confirm it on lendingtree.com before launch, or tell Claude to remove it. NRF's 2026 survey (mid-October) can replace it.
+- **Sign-up goal:** apps like this usually convert 2–5% of free users, so 100 passes likely needs 2,000–3,300 sign-ups, not 1,000.
+- **Black Friday price** (optional).
+- **Change freeze:** bug fixes only from Nov 10 to Dec 24 (competitors' worst reviews come from buggy updates in December).
 
 ---
 

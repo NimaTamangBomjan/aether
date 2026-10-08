@@ -30,7 +30,25 @@ export function InviteCreator() {
           <Label htmlFor="invite-url">Send this link to one person</Label>
           <Input id="invite-url" value={url} readOnly onFocus={(e) => e.currentTarget.select()} />
           <div className="flex flex-wrap gap-2">
+            {canShare && (
+              <Button
+                className="flex-1"
+                onClick={() =>
+                  navigator
+                    .share({
+                      title: "Join our family gift list",
+                      text: "Join our family gift list on GiftLedger, so we don't buy the same gifts twice:",
+                      url,
+                    })
+                    .catch(() => {})
+                }
+              >
+                <Share2 aria-hidden /> Send with text or email
+              </Button>
+            )}
             <Button
+              variant={canShare ? "outline" : "default"}
+              className={canShare ? undefined : "flex-1"}
               onClick={async () => {
                 try {
                   await navigator.clipboard.writeText(url);
@@ -42,16 +60,6 @@ export function InviteCreator() {
             >
               <Copy aria-hidden /> Copy link
             </Button>
-            {canShare && (
-              <Button
-                variant="outline"
-                onClick={() =>
-                  navigator.share({ title: "Join my gift list", text: "Join our family gift list on GiftLedger:", url }).catch(() => {})
-                }
-              >
-                <Share2 aria-hidden /> Share
-              </Button>
-            )}
           </div>
           <p className="text-sm text-muted-foreground">The link works once and expires in 7 days.</p>
           <Button variant="ghost" size="sm" onClick={() => setUrl(null)}>
@@ -60,7 +68,7 @@ export function InviteCreator() {
         </>
       ) : (
         <>
-          <p>Create a private link and text or email it to a family member.</p>
+          <p>Invite your partner or parents. They&apos;ll see what&apos;s already bought, so nobody doubles up, and gifts you hide from them stay hidden.</p>
           <Button
             className="w-full"
             disabled={pending}

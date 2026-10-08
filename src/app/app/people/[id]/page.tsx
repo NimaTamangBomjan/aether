@@ -67,6 +67,7 @@ export default async function PersonPage({ params }: PageProps<"/app/people/[id]
         names={names}
         shared={(members ?? []).length > 1}
         hiddenFrom={hiddenFrom}
+        remindersOn={ctx.hasPass}
       />
 
       {(recipient.interests.length > 0 || recipient.notes || recipient.dont_buy_notes) && (

@@ -6,6 +6,7 @@ import { BudgetBar } from "@/components/app/budget-bar";
 import { BudgetEditor } from "@/components/app/budget-editor";
 import { BudgetText } from "@/components/app/budget-text";
 import { UpgradePrompt } from "@/components/app/upgrade-prompt";
+import { HomeScreenTip } from "@/components/app/home-screen-tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { summarizeList, type PersonSummary } from "@/lib/budget";
@@ -115,6 +116,8 @@ export default async function Dashboard() {
           </details>
         )}
       </section>
+
+      <HomeScreenTip />
     </div>
   );
 }

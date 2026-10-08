@@ -3,7 +3,7 @@ import { expect, test } from "./helpers";
 test("the landing page has every section and leads to sign-up", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Stop overspending on holiday gifts.");
-  for (const heading of ["Sound familiar?", "See every budget at a glance", "Ideas when you're stuck", "One list for the whole family", "How it works", "Simple pricing", "Questions"]) {
+  for (const heading of ["Sound familiar?", "See every budget at a glance", "Ideas when you're stuck", "One list for the whole family", "Why not a spreadsheet, or a wish-list app?", "How it works", "Simple pricing", "Our promises", "Questions"]) {
     await expect(page.getByRole("heading", { name: heading })).toBeVisible();
   }
   await expect(page.getByText("one time, through Jan 31, 2027")).toBeVisible();

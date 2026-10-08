@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, Gift, Lightbulb, Users, Wallet } from "lucide-react";
+import { Check, Gift, Lightbulb, Minus, Users, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site/site-footer";
 
@@ -15,7 +15,27 @@ export const metadata: Metadata = {
 // Headline: option 1 of 3 (the owner picks the final wording; see PROGRESS.md).
 const HEADLINE = "Stop overspending on holiday gifts.";
 const SUBHEAD =
-  "Give everyone a budget, get ideas when you're stuck, and share one list with your family so nobody buys the same gift twice.";
+  "Give everyone on your list a budget and see your total as you shop. Share one list with your family so nobody buys the same gift twice, and the surprises stay secret.";
+
+// From LendingTree's 2025 holiday debt survey (see PROGRESS.md; the owner confirms before launch).
+const STAT = { figure: "48%", text: "of parents went into debt for the holidays last year: $1,324 on average.", source: "LendingTree, 2025" };
+
+const COMPARISON: { feature: string; us: boolean; sheet: boolean; wishlist: boolean }[] = [
+  { feature: "A budget for each person, with a running total", us: true, sheet: true, wishlist: false },
+  { feature: "Your family sees what's already bought, right away", us: true, sheet: false, wishlist: true },
+  { feature: "Gifts stay hidden from the person they're for", us: true, sheet: false, wishlist: true },
+  { feature: "Gift ideas that fit what's left in the budget", us: true, sheet: false, wishlist: false },
+  { feature: "A reminder before a return window closes", us: true, sheet: false, wishlist: false },
+  { feature: "Easy on a phone, no download", us: true, sheet: false, wishlist: false },
+  { feature: "No ads or shopping links", us: true, sheet: true, wishlist: false },
+];
+
+const PROMISES = [
+  { title: "No ads, no shopping links", text: "We don't earn a cent from what you buy or where you buy it, so the ideas are just ideas." },
+  { title: "One price, never a subscription", text: "Free for up to 5 people. $9.99 once for the whole season if you need more. It never renews." },
+  { title: "Your list is safe", text: "Saved to your account as you go, on every phone you sign in on. Download a copy anytime." },
+  { title: "Surprises stay surprises", text: "Hide any gift from anyone on the list. They won't see it on any page, in any total or email." },
+];
 
 const PROBLEMS = [
   "You don't see the total until the card bill arrives in January.",
@@ -72,6 +92,14 @@ const FAQ = [
     a: "No. GiftLedger works in your phone's browser. You can add it to your home screen so it opens like an app.",
   },
   {
+    q: "My parents aren't great with apps. Will they manage?",
+    a: "Yes. You send them a link by text. They tap it, type their email, and enter the code we send. No app to download and no password to remember.",
+  },
+  {
+    q: "Can I add a gift from a store's website?",
+    a: "Yes. Paste the link from Amazon, Target or any store, and GiftLedger fills in the gift and store for you.",
+  },
+  {
     q: "What happens to my lists after January 31?",
     a: "They stay yours. You can still view, edit and export everything. Only the extra Season Pass features stop.",
   },
@@ -102,8 +130,12 @@ export default function Home() {
               <Button asChild size="lg" className="w-full sm:w-auto">
                 <Link href="/sign-in">Start free</Link>
               </Button>
-              <p className="text-sm text-muted-foreground">Free for up to 5 people. No card needed.</p>
+              <p className="text-sm text-muted-foreground">Free for up to 5 people. No card, no download.</p>
             </div>
+            <p className="rounded-xl bg-secondary/60 p-4">
+              <span className="text-2xl font-bold text-primary">{STAT.figure}</span> {STAT.text}{" "}
+              <span className="text-sm text-muted-foreground">({STAT.source})</span>
+            </p>
           </div>
           <div className="mx-auto w-full max-w-xs">
             <Image
@@ -131,6 +163,9 @@ export default function Home() {
               ))}
             </ul>
             <p className="text-lg">GiftLedger keeps all of it in one place, on your phone, in a few taps.</p>
+            <p className="text-muted-foreground">
+              Already started shopping? It&apos;s not too late: add what you&apos;ve bought in a minute and see exactly where you stand.
+            </p>
           </div>
         </section>
 
@@ -150,6 +185,50 @@ export default function Home() {
               </div>
             </div>
           ))}
+        </section>
+
+        <section aria-labelledby="compare" className="mx-auto w-full max-w-3xl space-y-5 px-4 pb-14">
+          <h2 id="compare" className="text-2xl font-bold">
+            Why not a spreadsheet, or a wish-list app?
+          </h2>
+          <div className="overflow-x-auto rounded-xl border">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-secondary/60">
+                <tr>
+                  <th scope="col" className="p-3 font-medium">
+                    <span className="sr-only">Feature</span>
+                  </th>
+                  <th scope="col" className="p-3 text-center font-semibold text-primary">
+                    GiftLedger
+                  </th>
+                  <th scope="col" className="p-3 text-center font-medium">
+                    Spreadsheet
+                  </th>
+                  <th scope="col" className="p-3 text-center font-medium">
+                    Wish-list apps
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {COMPARISON.map((row) => (
+                  <tr key={row.feature} className="border-t">
+                    <th scope="row" className="p-3 font-normal">
+                      {row.feature}
+                    </th>
+                    {[row.us, row.sheet, row.wishlist].map((yes, i) => (
+                      <td key={i} className="p-3 text-center">
+                        {yes ? (
+                          <Check aria-label="Yes" className="mx-auto size-5 text-ok-foreground" />
+                        ) : (
+                          <Minus aria-label="No" className="mx-auto size-5 text-muted-foreground" />
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section aria-labelledby="how" className="bg-secondary/60">
@@ -205,9 +284,23 @@ export default function Home() {
               <Button asChild className="w-full">
                 <Link href="/sign-in">Start free, upgrade anytime</Link>
               </Button>
-              <p className="text-sm text-muted-foreground">Not a subscription. It never renews.</p>
+              <p className="text-sm text-muted-foreground">Not a subscription. It never renews. One missed return pays for it.</p>
             </div>
           </div>
+        </section>
+
+        <section aria-labelledby="promises" className="mx-auto w-full max-w-5xl space-y-6 px-4 pb-14">
+          <h2 id="promises" className="text-2xl font-bold">
+            Our promises
+          </h2>
+          <ul className="grid gap-4 md:grid-cols-2">
+            {PROMISES.map((p) => (
+              <li key={p.title} className="space-y-1 rounded-xl border bg-card p-5">
+                <h3 className="font-semibold">{p.title}</h3>
+                <p className="text-muted-foreground">{p.text}</p>
+              </li>
+            ))}
+          </ul>
         </section>
 
         <section aria-labelledby="faq" className="bg-secondary/60">

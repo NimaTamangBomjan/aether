@@ -143,7 +143,7 @@ test("after 10 free requests, the next one shows the Season Pass offer", async (
 test("you've reached the budget: no request is used", async ({ page }) => {
   await newUserOnDashboard(page, "aispent");
   await addPerson(page, "Ana", "20");
-  await page.getByPlaceholder("What's the gift?").fill("Scarf");
+  await page.getByLabel("Gift", { exact: true }).fill("Scarf");
   await page.getByLabel("Price").fill("20");
   await page.getByRole("button", { name: "Add gift" }).click();
   await page.getByRole("button", { name: "Mark bought" }).click();

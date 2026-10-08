@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Settings, Users } from "lucide-react";
 import { ListSwitcher } from "@/components/app/list-switcher";
+import { LiveRefresh } from "@/components/app/live-refresh";
 import { Button } from "@/components/ui/button";
 import { getListContext } from "@/lib/data/list";
 
@@ -27,7 +28,14 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
           </Button>
         </nav>
       </header>
-      <main className="flex-1 px-4 pb-10">{children}</main>
+      <main className="flex-1 px-4 pb-6">{children}</main>
+      <footer className="px-4 pb-8 text-center text-sm text-muted-foreground">
+        Everything is saved to your account as you go.{" "}
+        <a href="/api/export" download className="underline underline-offset-4">
+          Download a copy
+        </a>
+      </footer>
+      <LiveRefresh />
     </div>
   );
 }

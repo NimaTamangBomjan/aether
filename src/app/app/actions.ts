@@ -7,6 +7,7 @@ import { getListContext } from "@/lib/data/list";
 import { Constants } from "@/lib/database.types";
 import { isValidTimeZone } from "@/lib/dates";
 import { FREE_RECIPIENT_LIMIT } from "@/lib/types";
+import { giftFromPastedLink } from "@/lib/paste-link";
 import { env } from "@/lib/env";
 import { sendEmail } from "@/lib/email/send";
 import { welcomeEmail } from "@/lib/email/templates";
@@ -125,7 +126,10 @@ export async function addQuickGift(_prev: FormState, formData: FormData): Promis
   const recipient = await recipientOnList(ctx, formData.get("recipient_id")?.toString() ?? "");
   if (!recipient) return { error: TRY_AGAIN };
 
-  const parsed = quickGiftInput.safeParse(formToObject(formData));
+  // A pasted store link becomes the gift: its title and store come from the address.
+  const fields = formToObject(formData);
+  const pasted = giftFromPastedLink(fields.title ?? "");
+  const parsed = quickGiftInput.safeParse(pasted ? { ...fields, title: pasted.title } : fields);
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
 
   const { error } = await ctx.supabase.from("gifts").insert({
@@ -133,11 +137,13 @@ export async function addQuickGift(_prev: FormState, formData: FormData): Promis
     recipient_id: recipient.id,
     title: parsed.data.title,
     price_cents: parsed.data.price,
+    link: pasted?.link ?? null,
+    store: pasted?.store ?? null,
     created_by: ctx.userId,
   });
   if (error) return { error: TRY_AGAIN };
   refresh();
-  trackServer(ctx.userId, "gift_added", { with_price: parsed.data.price != null });
+  trackServer(ctx.userId, "gift_added", { with_price: parsed.data.price != null, from_link: Boolean(pasted) });
   return { ok: true };
 }
 
