@@ -5,7 +5,7 @@ Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 ## Where we are
 - **Current stage:** 10 ✅ built and tested. All 10 stages are done; what's left needs the owner (keys, accounts, domain, headline, legal review, purchases). See "Needs from the owner" and the launch checklist below.
 - **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
-- **Last updated:** Oct 7, 2026
+- **Last updated:** Oct 8, 2026
 
 ## How to resume in a fresh session
 ```bash
@@ -21,7 +21,8 @@ Local test inbox (sign-in emails): http://127.0.0.1:54324
 ## Needs from the owner (see the kickoff plan, section 3)
 | When | What | Status |
 |---|---|---|
-| **Now** | **GitHub access: push was refused (403). Reconnect GitHub at https://claude.ai/connect-github and install the Claude GitHub App on `aether`. Until then work is only saved inside the container.** | **blocking pushes** |
+| Done (Oct 8) | GitHub access: reconnected; all work is pushed to `claude/new-session-21q47i` and `main` | ✅ |
+| **Now** | **Make `main` the default branch on GitHub:** repository → Settings → General → "Default branch" → switch to `main` → Update. GitHub picked the work branch because it was pushed first; Vercel deploys the default branch to production. | waiting |
 | Now | Start the Stripe account (test mode is enough for now) | waiting |
 | By Oct 15 | Anthropic API key → cloud environment as `APP_ANTHROPIC_API_KEY` (owner adds credits personally) | waiting |
 | By Oct 15 | Allow domains in the cloud environment's network settings: `*.supabase.co`, `api.supabase.com`, `*.stripe.com`, `*.stripe.network`, `*.stripecdn.com`, `api.resend.com`, `*.posthog.com`, `*.sentry.io` | waiting |
@@ -595,7 +596,7 @@ Full click-by-click steps are in README → "Putting it online".
 
 ## Next step
 All 10 stages are built and tested locally. Next, in order:
-1. **GitHub access** (owner): reconnect GitHub so the local commits can be pushed. Nothing is online until then.
+1. **Default branch** (owner): set `main` as the default branch on GitHub (see the table at the top), then connect the repository to Vercel.
 2. **Keys and accounts** (owner, table at the top): Stripe test keys, the Anthropic key, Supabase and Vercel projects, Resend, PostHog, Sentry, and Cloudflare Turnstile. As each arrives, Claude runs its live check: `npm run test:ai-live`, the Stripe test-card run (`STRIPE_LIVE_TEST=1`), and a real sign-in email.
 3. **Decisions** (owner): the headline (A/B/C), the legal review (refund policy, governing state), and the support email.
 4. **Buffer days** (Nov 5–9): fix anything the live checks find. Run the full suite again. Go live (owner switches Stripe to live mode).
