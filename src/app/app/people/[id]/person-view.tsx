@@ -1,7 +1,8 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import Link from "next/link";
-import { useActionState, useEffect, useOptimistic, useRef, useTransition } from "react";
+import { useActionState, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { addQuickGift, setGiftStatus, type FormState } from "@/app/app/actions";
 import { BudgetBar } from "@/components/app/budget-bar";
@@ -64,15 +65,26 @@ export function PersonView({
       ),
   );
   const [, startTransition] = useTransition();
+  const [poppedId, setPoppedId] = useState<string | null>(null);
   const summary = summarizePerson(recipient, optimisticGifts);
 
   function advance(gift: Gift) {
     const next = NEXT_STATUS[gift.status];
     if (!next) return;
+    // The first gift that reaches "bought" is the moment this person is covered —
+    // the small win that keeps a shopper coming back. Celebrate it, quietly.
+    const wasCovered = optimisticGifts.some((g) => g.status === "bought" || g.status === "wrapped" || g.status === "given");
+    setPoppedId(gift.id);
     startTransition(async () => {
       setOptimisticStatus({ id: gift.id, status: next });
       const result = await setGiftStatus(gift.id, next);
-      if (result.error) toast.error(result.error);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      if (next === "bought" && !wasCovered) {
+        toast.success(`🎁 ${recipient.name} is covered!`, { description: "Nice — one less person to worry about." });
+      }
     });
   }
 
@@ -102,11 +114,11 @@ export function PersonView({
           </p>
         ) : (
           <ul className="space-y-3">
-            {optimisticGifts.map((gift) => {
+            {optimisticGifts.map((gift, i) => {
               const canEdit = isOwner || gift.created_by === userId;
               const nextAction = NEXT_STATUS_ACTION[gift.status];
               return (
-                <li key={gift.id} className="space-y-3 rounded-xl border bg-card p-4 shadow-xs" data-testid="gift">
+                <li key={gift.id} className="animate-reveal space-y-3 rounded-xl border bg-card p-4 shadow-xs" style={{ "--i": i } as CSSProperties} data-testid="gift">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold break-words">{gift.title}</p>
@@ -125,7 +137,14 @@ export function PersonView({
                         <p className="text-sm text-muted-foreground">Hidden from {hiddenFrom[gift.id].join(", ")}</p>
                       ) : null}
                     </div>
-                    <span className={cn("shrink-0 rounded-full px-3 py-1 text-sm font-medium", STATUS_STYLE[gift.status])}>
+                    <span
+                      key={gift.status}
+                      className={cn(
+                        "shrink-0 rounded-full px-3 py-1 text-sm font-medium",
+                        STATUS_STYLE[gift.status],
+                        poppedId === gift.id && "animate-pop",
+                      )}
+                    >
                       {STATUS_LABEL[gift.status]}
                     </span>
                   </div>

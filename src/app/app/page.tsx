@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Gift, Plus } from "lucide-react";
 import { BudgetBar } from "@/components/app/budget-bar";
 import { BudgetEditor } from "@/components/app/budget-editor";
 import { BudgetText } from "@/components/app/budget-text";
@@ -9,12 +10,20 @@ import { UpgradePrompt } from "@/components/app/upgrade-prompt";
 import { HomeScreenTip } from "@/components/app/home-screen-tip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { summarizeList, type PersonSummary } from "@/lib/budget";
+import { summarizeList, type BudgetState, type PersonSummary } from "@/lib/budget";
 import { getListContext, getListData } from "@/lib/data/list";
 import { formatCents } from "@/lib/money";
 import { FREE_RECIPIENT_LIMIT } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Your list" };
+
+const LEFT_COLOR: Record<BudgetState, string> = {
+  ok: "text-ok-foreground",
+  near: "text-near-foreground",
+  over: "text-over-foreground",
+  none: "text-foreground",
+};
 
 export default async function Dashboard() {
   const ctx = await getListContext();
@@ -39,10 +48,7 @@ export default async function Dashboard() {
           </div>
           <div>
             <dt className="text-sm text-muted-foreground">{summary.left != null && summary.left < 0 ? "Over" : "Left"}</dt>
-            <dd
-              className={summary.state === "over" ? "text-xl font-bold text-over-foreground" : "text-xl font-bold"}
-              data-testid="total-left"
-            >
+            <dd className={cn("text-2xl font-bold", LEFT_COLOR[summary.state])} data-testid="total-left">
               {summary.left == null ? "—" : formatCents(Math.abs(summary.left))}
             </dd>
           </div>
@@ -89,7 +95,10 @@ export default async function Dashboard() {
         )}
 
         {summary.people.length === 0 ? (
-          <div className="rounded-xl border border-dashed p-6 text-center">
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <span className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-secondary text-primary">
+              <Gift aria-hidden className="size-6" />
+            </span>
             <p className="mb-4 text-muted-foreground">{ctx.isOwner ? "No one on your list yet." : "No one on this list yet."}</p>
             {ctx.isOwner && (
               <Button asChild>
@@ -99,8 +108,8 @@ export default async function Dashboard() {
           </div>
         ) : (
           <ul className="space-y-3">
-            {summary.people.map((p) => (
-              <PersonCard key={p.recipient.id} person={p} relationship={recipients.find((r) => r.id === p.recipient.id)?.relationship} />
+            {summary.people.map((p, i) => (
+              <PersonCard key={p.recipient.id} index={i} person={p} relationship={recipients.find((r) => r.id === p.recipient.id)?.relationship} />
             ))}
           </ul>
         )}
@@ -122,13 +131,13 @@ export default async function Dashboard() {
   );
 }
 
-function PersonCard({ person, relationship }: { person: PersonSummary; relationship?: string }) {
+function PersonCard({ person, relationship, index = 0 }: { person: PersonSummary; relationship?: string; index?: number }) {
   const { recipient } = person;
   return (
-    <li>
+    <li className="animate-reveal" style={{ "--i": index } as CSSProperties}>
       <Link
         href={`/app/people/${recipient.id}`}
-        className="block space-y-2 rounded-xl border bg-card p-4 shadow-xs transition-colors hover:bg-secondary focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+        className="block space-y-2 rounded-xl border bg-card p-4 shadow-xs transition hover:-translate-y-0.5 hover:border-primary/20 hover:bg-secondary/60 hover:shadow-md active:translate-y-0 active:scale-[0.99] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
       >
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">

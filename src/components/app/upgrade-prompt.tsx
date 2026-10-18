@@ -1,15 +1,21 @@
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function UpgradePrompt({ message }: { message: string }) {
   return (
-    <div role="status" className="rounded-xl border border-primary/30 bg-secondary p-4">
-      <p className="mb-3 flex items-start gap-2 font-medium">
-        <Sparkles aria-hidden className="mt-0.5 size-5 shrink-0 text-primary" />
+    <div
+      role="status"
+      className="animate-reveal rounded-2xl border border-primary/30 bg-gradient-to-br from-secondary to-accent/60 p-5 shadow-xs"
+    >
+      <p className="mb-1 flex items-start gap-2.5 font-medium">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <Gift aria-hidden className="size-5" />
+        </span>
         {message}
       </p>
-      <Button asChild>
+      <p className="mb-3 pl-[2.625rem] text-sm text-muted-foreground">One-time $9.99 for the whole season. Never renews.</p>
+      <Button asChild className="w-full sm:w-auto">
         <Link href="/app/upgrade">See the Season Pass</Link>
       </Button>
     </div>

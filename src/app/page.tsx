@@ -128,6 +128,7 @@ export default function Home() {
       </header>
 
       <main>
+        <div className="bg-gradient-to-b from-accent/40 via-secondary/25 to-transparent">
         <section className="mx-auto grid w-full max-w-5xl items-center gap-8 px-4 pt-6 pb-12 md:grid-cols-2 md:pt-12">
           <div className="space-y-5">
             <h1 className="text-4xl leading-tight font-bold md:text-5xl">{HEADLINE}</h1>
@@ -157,6 +158,7 @@ export default function Home() {
             />
           </div>
         </section>
+        </div>
 
         <section aria-labelledby="problem" className="bg-secondary/60">
           <div className="mx-auto w-full max-w-3xl space-y-5 px-4 py-12">

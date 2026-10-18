@@ -16,9 +16,15 @@ export function BudgetBar({ percent, state, label, className }: { percent: numbe
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={percent}
-      className={cn("h-2.5 w-full overflow-hidden rounded-full bg-muted", className)}
+      className={cn("h-2.5 w-full overflow-hidden rounded-full bg-muted shadow-[inset_0_1px_1px_rgb(0_0_0/0.04)]", className)}
     >
-      <div className={cn("h-full rounded-full transition-[width] duration-300", FILL[state])} style={{ width: `${percent}%` }} />
+      <div
+        className={cn(
+          "h-full rounded-full bg-gradient-to-b from-white/25 to-transparent transition-[width] duration-500 ease-out motion-reduce:transition-none",
+          FILL[state],
+        )}
+        style={{ width: `${percent}%` }}
+      />
     </div>
   );
 }

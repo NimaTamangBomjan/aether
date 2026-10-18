@@ -1,6 +1,7 @@
 "use client";
 
 import { Lightbulb, RefreshCw, Sparkles } from "lucide-react";
+import type { CSSProperties } from "react";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { requestIdeas, saveIdeaAsGift, type IdeasResult, type IdeasUsage } from "@/app/app/ideas-actions";
@@ -134,8 +135,8 @@ export function IdeasPanel({
 
         {!loading && ideas.length > 0 && (
           <ul className="space-y-3">
-            {ideas.map((idea) => (
-              <li key={idea.title} className="space-y-2 rounded-xl border bg-card p-4 shadow-xs" data-testid="idea">
+            {ideas.map((idea, i) => (
+              <li key={idea.title} className="animate-reveal space-y-2 rounded-xl border bg-card p-4 shadow-xs" style={{ "--i": i } as CSSProperties} data-testid="idea">
                 <div className="flex items-start justify-between gap-3">
                   <p className="font-semibold">{idea.title}</p>
                   <p className="shrink-0 font-semibold" data-testid="idea-price">
@@ -150,7 +151,7 @@ export function IdeasPanel({
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   {saved.has(idea.title) ? (
-                    <span className="px-3 text-sm font-medium text-ok-foreground">Saved ✓</span>
+                    <span className="animate-pop inline-block px-3 text-sm font-medium text-ok-foreground">Saved ✓</span>
                   ) : (
                     <Button size="sm" onClick={() => save(idea)}>
                       Save as gift idea
