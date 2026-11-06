@@ -83,7 +83,7 @@ export function PersonView({
         return;
       }
       if (next === "bought" && !wasCovered) {
-        toast.success(`🎁 ${recipient.name} is covered!`, { description: "Nice — one less person to worry about." });
+        toast.success(`${recipient.name} is covered!`, { description: "Nice — one less person to worry about." });
       }
     });
   }

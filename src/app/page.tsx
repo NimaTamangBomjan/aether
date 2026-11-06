@@ -103,7 +103,7 @@ const FAQ = [
   },
   {
     q: "Can I add a gift from a store's website?",
-    a: "Yes. Paste the link from Amazon, Target or any store, and GiftLedger fills in the gift and store for you.",
+    a: "Yes. Paste the link from Amazon, Target or any store, and GiftLedger fills in the name and store for you. You just add the price.",
   },
   {
     q: "What happens to my lists after January 31?",
@@ -118,13 +118,20 @@ const FAQ = [
 export default function Home() {
   return (
     <div className="min-h-dvh">
-      <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
-          <Gift aria-hidden className="size-5" /> GiftLedger
-        </Link>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/sign-in">Sign in</Link>
-        </Button>
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
+            <Gift aria-hidden className="size-5" /> GiftLedger
+          </Link>
+          <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/sign-in">Sign in</Link>
+            </Button>
+            <Button asChild size="sm">
+              <Link href="/sign-in">Start free</Link>
+            </Button>
+          </div>
+        </div>
       </header>
 
       <main>
