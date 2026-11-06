@@ -41,7 +41,7 @@ async function addPerson(page, name, budget, relationship) {
 }
 
 async function addGift(page, title, price, bought) {
-  await page.getByPlaceholder("What's the gift?").fill(title);
+  await page.getByPlaceholder("Gift name, or paste a link").fill(title);
   await page.getByLabel("Price").fill(price);
   await page.getByRole("button", { name: "Add gift" }).click();
   const card = page.getByTestId("gift").filter({ hasText: title });
