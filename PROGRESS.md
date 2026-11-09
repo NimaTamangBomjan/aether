@@ -4,8 +4,10 @@ Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
 - **Current stage:** 10 ✅ built and tested. All 10 stages are done; what's left needs the owner (keys, accounts, domain, headline, legal review, purchases). See "Needs from the owner" and the launch checklist below.
-- **Launch:** Tue Nov 10, 2026. Build days Oct 8 – Nov 4, buffer Nov 5–9.
-- **Last updated:** Oct 8, 2026 (Stage 11 added after the competitor research)
+- **Launch:** moved by the owner (Nov 9) from Nov 10 to about **Nov 17–20**, to be solid before Black Friday (Nov 27).
+- **Go-live order (agreed Nov 9):** 1) fix Stripe test checkout ("Couldn't open checkout"; check Stripe → Developers → Logs) → 2) buy domain, verify it in Resend, switch Supabase SMTP sender → 3) app emails: `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`, `UNSUBSCRIBE_SECRET` in Vercel → 4) Anthropic key → 5) Turnstile, PostHog, Sentry + headline, legal review, support email → 6) Stripe live mode, one real purchase and refund → launch.
+- **Live now:** https://giftledger-iota.vercel.app (Supabase + Vercel). Supabase SMTP uses Resend's test sender (`onboarding@resend.dev`), which only emails the owner's address; custom templates are pasted.
+- **Last updated:** Nov 9, 2026
 
 ## How to resume in a fresh session
 ```bash
