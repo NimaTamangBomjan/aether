@@ -14,6 +14,9 @@ export default defineConfig({
   reporter: [["list"]],
   use: {
     baseURL: `http://localhost:${PORT}`,
+    // Optional: use an already-installed Chromium (e.g. a cloud container whose browser is newer
+    // than this Playwright version): PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium npm run test:e2e
+    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } : {},
     trace: "retain-on-failure",
     timezoneId: "America/New_York",
     locale: "en-US",
