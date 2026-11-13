@@ -1,6 +1,6 @@
 import Stripe from "stripe";
 import { randomUUID } from "node:crypto";
-import { addPerson, expect, newUserOnDashboard, test, userIdFor } from "./helpers";
+import { addPerson, codeFrom, emailCount, expect, latestEmail, newUserOnDashboard, test, uniqueEmail, userIdFor } from "./helpers";
 
 const SECRET = "whsec_local_test_secret_not_real";
 
@@ -114,4 +114,18 @@ test("a family member's paid owner unlocks limits for the whole list", async ({ 
   await page.getByRole("button", { name: "Create invite link" }).click();
   await expect(page.getByLabel("Send this link to one person")).toBeVisible();
   await expect(page.getByText("Your free plan includes 1 family member.")).toHaveCount(0);
+});
+
+test("a ready buyer can go from the landing page straight to the Season Pass checkout", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: "Get the Season Pass" }).last().click();
+  await expect(page).toHaveURL(/\/sign-in\?next=%2Fapp%2Fupgrade$/);
+  const email = uniqueEmail("buyer");
+  const before = await emailCount(email);
+  await page.getByLabel("Your email").fill(email);
+  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
+  await page.getByLabel("6-digit code").fill(codeFrom(await latestEmail(email, before)));
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/app\/upgrade$/);
+  await expect(page.getByRole("button", { name: "Upgrade for $9.99" })).toBeVisible();
 });

@@ -80,6 +80,9 @@ const STEPS = [
   { title: "Invite your family", text: "Share a link so everyone sees what's covered, and get a reminder before return windows close." },
 ];
 
+// Ready buyers sign in and land straight on checkout (the upgrade page skips onboarding).
+const BUY_PASS_HREF = "/sign-in?next=%2Fapp%2Fupgrade";
+
 const FAQ = [
   {
     q: "Is it really free?",
@@ -145,6 +148,12 @@ export default function Home() {
                 <Link href="/sign-in">Start free</Link>
               </Button>
               <p className="text-sm text-muted-foreground">Free for up to 5 people. No card, no download.</p>
+              <p className="text-sm">
+                Buying for more than 5 people?{" "}
+                <Link href={BUY_PASS_HREF} className="font-medium text-primary underline underline-offset-4">
+                  Get the Season Pass for $9.99
+                </Link>
+              </p>
             </div>
             <p className="rounded-xl bg-secondary/60 p-4">
               <span className="text-2xl font-bold text-primary">{STAT.figure}</span> {STAT.text}{" "}
@@ -299,7 +308,7 @@ export default function Home() {
                 ))}
               </ul>
               <Button asChild className="w-full">
-                <Link href="/sign-in">Start free, upgrade anytime</Link>
+                <Link href={BUY_PASS_HREF}>Get the Season Pass</Link>
               </Button>
               <p className="text-sm text-muted-foreground">Not a subscription. It never renews. One missed return pays for it.</p>
             </div>
