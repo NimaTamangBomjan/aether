@@ -5,7 +5,7 @@ const TOKEN = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde";
 
 describe("scrubbing secrets from addresses", () => {
   it("removes invite tokens, query strings and fragments", () => {
-    expect(scrubUrl(`https://giftledger.app/join/${TOKEN}?next=/app#x`)).toBe("https://giftledger.app/join/[token]");
+    expect(scrubUrl(`https://giftyjifty.com/join/${TOKEN}?next=/app#x`)).toBe("https://giftyjifty.com/join/[token]");
     expect(scrubUrl(`/join/${TOKEN}`)).toBe("/join/[token]");
     expect(scrubUrl("/unsubscribe?u=1&s=signature")).toBe("/unsubscribe");
     expect(scrubUrl("/auth/callback?code=secret-code")).toBe("/auth/callback");
@@ -22,10 +22,10 @@ describe("scrubbing secrets from addresses", () => {
 
   it("cleans every text property sent to analytics", () => {
     const out = scrubProperties({
-      $current_url: `https://giftledger.app/join/${TOKEN}`,
+      $current_url: `https://giftyjifty.com/join/${TOKEN}`,
       $pathname: `/join/${TOKEN}`,
-      $referrer: "https://giftledger.app/unsubscribe?u=1&s=sig",
-      $initial_current_url: "https://giftledger.app/auth/confirm?token_hash=abc",
+      $referrer: "https://giftyjifty.com/unsubscribe?u=1&s=sig",
+      $initial_current_url: "https://giftyjifty.com/auth/confirm?token_hash=abc",
       $browser: "Chrome",
       count: 3,
     });

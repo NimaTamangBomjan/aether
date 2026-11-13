@@ -27,13 +27,13 @@ function sessionEvent(over: Partial<Stripe.Checkout.Session> = {}, type = "check
 
 describe("Checkout session", () => {
   it("is a one-time payment for one Season Pass, tagged with the user", () => {
-    const p = checkoutSessionParams({ userId: USER, email: "m@example.com", appUrl: "https://giftledger.app", priceId: "price_123" });
+    const p = checkoutSessionParams({ userId: USER, email: "m@example.com", appUrl: "https://giftyjifty.com", priceId: "price_123" });
     expect(p.mode).toBe("payment");
     expect(p.line_items).toEqual([{ price: "price_123", quantity: 1 }]);
     expect(p.client_reference_id).toBe(USER);
     expect(p.metadata).toEqual({ app: "giftledger", user_id: USER });
-    expect(p.success_url).toBe("https://giftledger.app/app/upgrade/success?session_id={CHECKOUT_SESSION_ID}");
-    expect(p.cancel_url).toBe("https://giftledger.app/app/upgrade?canceled=1");
+    expect(p.success_url).toBe("https://giftyjifty.com/app/upgrade/success?session_id={CHECKOUT_SESSION_ID}");
+    expect(p.cancel_url).toBe("https://giftyjifty.com/app/upgrade?canceled=1");
   });
 });
 

@@ -1,4 +1,4 @@
-# GiftLedger
+# GiftyJifty
 
 A phone-friendly holiday gift planner:
 - a budget for every person, with live totals;
@@ -79,11 +79,11 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
    - **Email OTP Expiration: 900** (seconds).
 4. **Authentication → Emails → SMTP Settings:** turn on custom SMTP using Resend (step 5): host `smtp.resend.com`, port `465`, user `resend`, password = your Resend API key, sender = your `EMAIL_FROM` address.
 5. **Authentication → Emails → Templates:**
-   - **Magic Link** and **Confirm signup:** subject `Your GiftLedger sign-in code: {{ .Token }}`, body = the contents of `supabase/templates/sign-in.html`.
-   - **Change Email Address:** subject `GiftLedger: no change was made`, body = `supabase/templates/email-change.html`.
-   - **Reset Password:** subject `GiftLedger doesn't use passwords`, body = `supabase/templates/password-reset.html`.
+   - **Magic Link** and **Confirm signup:** subject `Your GiftyJifty sign-in code: {{ .Token }}`, body = the contents of `supabase/templates/sign-in.html`.
+   - **Change Email Address:** subject `GiftyJifty: no change was made`, body = `supabase/templates/email-change.html`.
+   - **Reset Password:** subject `GiftyJifty doesn't use passwords`, body = `supabase/templates/password-reset.html`.
 
-   GiftLedger has no passwords and refuses email changes, but Supabase sends those two emails before it checks. These versions contain no links, so nobody can use them for phishing.
+   GiftyJifty has no passwords and refuses email changes, but Supabase sends those two emails before it checks. These versions contain no links, so nobody can use them for phishing.
 6. **Authentication → URL Configuration:**
    - Site URL: `https://YOUR-DOMAIN`
    - Redirect URLs: `https://YOUR-DOMAIN/**` (add your Vercel preview URL too, if you use previews)
@@ -128,7 +128,7 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
 2. **API Keys → Create** (sending access).
 
 ### 6. Google sign-in (optional)
-1. console.cloud.google.com → create a project → **APIs & Services → OAuth consent screen**: type External, app name GiftLedger, your support email.
+1. console.cloud.google.com → create a project → **APIs & Services → OAuth consent screen**: type External, app name GiftyJifty, your support email.
 2. **Credentials → Create credentials → OAuth client ID**: type Web application, with Authorized redirect URI `https://YOUR-PROJECT-REF.supabase.co/auth/v1/callback`.
 3. In Supabase, go to **Authentication → Providers → Google**: turn it on and paste the client ID and secret.
 4. In Vercel, set `NEXT_PUBLIC_GOOGLE_SIGN_IN=1` and redeploy. The "Continue with Google" button then appears.
@@ -152,13 +152,13 @@ Do these in order. Each step says where to click. Never paste keys into chat or 
 | `STRIPE_WEBHOOK_SECRET` | Proves webhook messages come from Stripe | Stripe → Developers → Webhooks → your endpoint | **Yes** |
 | `ANTHROPIC_API_KEY` | AI gift ideas | console.anthropic.com → API Keys | **Yes** |
 | `RESEND_API_KEY` | Sends emails | resend.com → API Keys | **Yes** |
-| `EMAIL_FROM` | Sender, e.g. `GiftLedger <hello@yourdomain.com>` | Your verified Resend domain | No |
+| `EMAIL_FROM` | Sender, e.g. `GiftyJifty <hello@yourdomain.com>` | Your verified Resend domain | No |
 | `ADMIN_EMAIL` | Your email, for the AI cost warning | You | No |
 | `CRON_SECRET` | Stops strangers triggering the reminder job | Any long random string (`openssl rand -hex 32`) | **Yes** |
 | `UNSUBSCRIBE_SECRET` | Signs unsubscribe links | Any long random string | **Yes** |
 | `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | Analytics | PostHog → Project settings | No |
 | `SENTRY_DSN` / `NEXT_PUBLIC_SENTRY_DSN` | Error reports | Sentry → Project settings → Client Keys | No |
-| `NEXT_PUBLIC_APP_URL` | Your site address, e.g. `https://giftledger.app` | You | No |
+| `NEXT_PUBLIC_APP_URL` | Your site address, e.g. `https://giftyjifty.com` | You | No |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Contact address in the footer and legal pages | You | No |
 | `NEXT_PUBLIC_GOOGLE_SIGN_IN` | `1` once Google sign-in is set up | You | No |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | The "are you a person?" check on sign-in | Cloudflare → Turnstile → your widget (Site Key). The Secret Key goes in Supabase only | No |

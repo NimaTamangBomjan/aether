@@ -68,7 +68,7 @@ export default defineConfig({
         // Emails go to a local stand-in that records them.
         RESEND_API_KEY: "re_test_not_real",
         RESEND_BASE_URL: `http://127.0.0.1:${FAKE_EMAIL_PORT}`,
-        EMAIL_FROM: "GiftLedger <hello@giftledger.test>",
+        EMAIL_FROM: "GiftyJifty <hello@giftledger.test>",
         CRON_SECRET: "test-cron-secret-0123456789",
         UNSUBSCRIBE_SECRET: "test-unsubscribe-secret-0123456789",
         // Analytics go to a local stand-in that records them.

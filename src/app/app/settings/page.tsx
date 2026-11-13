@@ -104,7 +104,7 @@ export default async function SettingsPage() {
           </h2>
           <p className="text-sm text-muted-foreground">Something confusing, broken, or missing? We read every message.</p>
           <Button asChild variant="outline" className="w-full">
-            <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("GiftLedger feedback")}`}>Send feedback</a>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("GiftyJifty feedback")}`}>Send feedback</a>
           </Button>
         </section>
       )}

@@ -17,7 +17,7 @@ function layout(title: string, bodyHtml: string, footerHtml = "") {
   return `<!doctype html>
 <html lang="en"><body style="margin:0;padding:24px;background:#fffaf5;font-family:Arial,Helvetica,sans-serif;color:#2b2622;font-size:16px;line-height:1.5">
 <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px">
-<p style="margin:0 0 16px;font-weight:bold;color:#b4472f">GiftLedger</p>
+<p style="margin:0 0 16px;font-weight:bold;color:#b4472f">GiftyJifty</p>
 <h1 style="font-size:20px;margin:0 0 16px">${title}</h1>
 ${bodyHtml}
 </div>
@@ -32,9 +32,9 @@ function button(href: string, label: string) {
 export function welcomeEmail(opts: { name: string; appUrl: string }): Email {
   const hi = opts.name ? `Hi ${escapeHtml(opts.name)},` : "Hi,";
   return {
-    subject: "Welcome to GiftLedger",
+    subject: "Welcome to GiftyJifty",
     html: layout(
-      "Welcome to GiftLedger",
+      "Welcome to GiftyJifty",
       `<p>${hi}</p>
 <p>You're set up to plan this year's gifts without overspending. Three tips:</p>
 <ul><li>Give each person a budget, and watch the colors: green is fine, amber is close, red is over.</li>
@@ -59,21 +59,21 @@ export function plainName(name: string): string | null {
 export function inviteEmail(opts: { inviterName: string; inviteUrl: string }): Email {
   const who = plainName(opts.inviterName) ?? "A family member";
   return {
-    subject: "You're invited to a family gift list on GiftLedger",
+    subject: "You're invited to a family gift list on GiftyJifty",
     html: layout(
       "You're invited to a family gift list",
-      `<p><strong>${escapeHtml(who)}</strong> invited you to their family gift list on GiftLedger, so nobody buys the same gift twice.</p>
+      `<p><strong>${escapeHtml(who)}</strong> invited you to their family gift list on GiftyJifty, so nobody buys the same gift twice.</p>
 ${button(opts.inviteUrl, "Join the list")}
 <p style="font-size:14px;color:#6b625b">This link works once and expires in 7 days. If you weren't expecting this, you can ignore it.</p>`,
     ),
-    text: `${who} invited you to their family gift list on GiftLedger, so nobody buys the same gift twice.\n\nJoin: ${opts.inviteUrl}\n\nThis link works once and expires in 7 days. If you weren't expecting this, you can ignore it.\n`,
+    text: `${who} invited you to their family gift list on GiftyJifty, so nobody buys the same gift twice.\n\nJoin: ${opts.inviteUrl}\n\nThis link works once and expires in 7 days. If you weren't expecting this, you can ignore it.\n`,
   };
 }
 
 /** To the owner, once a day at most, when invite emails pause because too many were sent today. */
 export function invitesPausedEmail(): Email {
   return {
-    subject: "GiftLedger: invite emails paused for today",
+    subject: "GiftyJifty: invite emails paused for today",
     html: layout(
       "Invite emails are paused for today",
       `<p>More than 500 invite emails were sent in the last 24 hours, so sending them has paused automatically. People can still copy invite links and send them themselves.</p>
@@ -87,7 +87,7 @@ export function passReceiptEmail(opts: { name: string; amountCents: number; appU
   const amount = `$${(opts.amountCents / 100).toFixed(2)}`;
   const hi = opts.name ? `Thank you, ${escapeHtml(opts.name)}!` : "Thank you!";
   return {
-    subject: "GiftLedger: your Season Pass is active",
+    subject: "GiftyJifty: your Season Pass is active",
     html: layout(
       hi,
       `<p>We received your payment of ${amount}. Your Season Pass is active through ${SEASON_PASS_THROUGH}.</p>
@@ -113,8 +113,8 @@ export function reminderEmail(opts: { name: string; items: ReminderItem[]; today
   const count = opts.items.length;
   const subject =
     count === 1
-      ? `GiftLedger: ${lastDay.length ? "last day to return" : "return by " + formatDate(opts.items[0].returnBy, opts.today)} ${opts.items[0].giftTitle}`
-      : `GiftLedger: ${count} gifts to return soon`;
+      ? `GiftyJifty: ${lastDay.length ? "last day to return" : "return by " + formatDate(opts.items[0].returnBy, opts.today)} ${opts.items[0].giftTitle}`
+      : `GiftyJifty: ${count} gifts to return soon`;
 
   const row = (i: ReminderItem) =>
     `<li><strong>${escapeHtml(i.giftTitle)}</strong> for ${escapeHtml(i.recipientName)}${i.store ? ` (${escapeHtml(i.store)})` : ""}: return by ${formatDate(i.returnBy, opts.today)}</li>`;
@@ -142,7 +142,7 @@ ${button(`${opts.appUrl}/app`, "Open my list")}`,
 
 export function costWarningEmail(opts: { projectedUsd: number; spentUsd: number }): Email {
   return {
-    subject: `GiftLedger: AI cost projected at $${opts.projectedUsd.toFixed(2)} this month`,
+    subject: `GiftyJifty: AI cost projected at $${opts.projectedUsd.toFixed(2)} this month`,
     html: layout(
       "AI spending warning",
       `<p>AI gift ideas have cost about <strong>$${opts.spentUsd.toFixed(2)}</strong> so far this month, on track for <strong>$${opts.projectedUsd.toFixed(2)}</strong> (your warning level is $50).</p>

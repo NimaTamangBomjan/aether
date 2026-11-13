@@ -3,7 +3,7 @@ import { ContactLine, LegalPage } from "@/components/site/legal-page";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "What GiftLedger collects, why, who helps us run the app, and how to export or delete your data.",
+  description: "What GiftyJifty collects, why, who helps us run the app, and how to export or delete your data.",
 };
 
 // DRAFT for the owner's review before launch (CLAUDE.md §13: final legal wording is the owner's call).
@@ -11,7 +11,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage title="Privacy Policy">
       <p>
-        GiftLedger helps you plan holiday gifts. This page explains, in plain language, what information we keep, why,
+        GiftyJifty helps you plan holiday gifts. This page explains, in plain language, what information we keep, why,
         and the choices you have. We don&apos;t sell your information and we don&apos;t show ads.
       </p>
 
@@ -44,7 +44,7 @@ export default function PrivacyPage() {
 
       <h2>How we use it</h2>
       <ul>
-        <li>To run GiftLedger: your lists, budgets, family sharing and limits.</li>
+        <li>To run GiftyJifty: your lists, budgets, family sharing and limits.</li>
         <li>To send emails you need or asked for: sign-in codes, a welcome note, family invites, payment receipts and return reminders. You can turn reminders off in Settings or with the link in any reminder.</li>
         <li>To prevent abuse and keep the service secure.</li>
         <li>To understand, in aggregate, which features help, and to fix problems.</li>
@@ -59,7 +59,7 @@ export default function PrivacyPage() {
         terms, Anthropic does not use this data to train its models.
       </p>
 
-      <h2>Who helps us run GiftLedger</h2>
+      <h2>Who helps us run GiftyJifty</h2>
       <p>We share information only with companies that provide the service for us, and only what they need:</p>
       <ul>
         <li>Supabase (database and sign-in)</li>
@@ -82,9 +82,9 @@ export default function PrivacyPage() {
       <h2>How long we keep it</h2>
       <p>
         We keep your information while you have an account. When you delete your account, we delete your personal
-        information from GiftLedger, including your sign-in records. We keep basic payment records (amount and date,
+        information from GiftyJifty, including your sign-in records. We keep basic payment records (amount and date,
         without your name) because tax law requires it. Backups are deleted on a rolling basis within 30 days. The
-        companies that help us run GiftLedger keep their own short-term records (for example email delivery logs and
+        companies that help us run GiftyJifty keep their own short-term records (for example email delivery logs and
         error reports) and delete them on their own schedules; Stripe keeps payment records as the law requires.
       </p>
 
@@ -99,7 +99,7 @@ export default function PrivacyPage() {
 
       <h2>Children</h2>
       <p>
-        GiftLedger is not designed for children under 13, and you must be 13 or older to create an account. We don&apos;t
+        GiftyJifty is not designed for children under 13, and you must be 13 or older to create an account. We don&apos;t
         knowingly collect information from children under 13. Adults may add details about children they buy gifts for
         (such as an age range and interests); we use these only to plan gifts. If you think a child under 13 has made an
         account, contact us and we&apos;ll delete it.

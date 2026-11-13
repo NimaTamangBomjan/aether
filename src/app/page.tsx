@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SiteFooter } from "@/components/site/site-footer";
 
 export const metadata: Metadata = {
-  title: { absolute: "GiftLedger: stop overspending on holiday gifts" },
+  title: { absolute: "GiftyJifty: stop overspending on holiday gifts" },
   description:
     "A budget for everyone on your list, gift ideas when you're stuck, a shared family list so nobody buys the same thing twice, and return reminders. Free to start.",
   alternates: { canonical: "/" },
@@ -95,7 +95,7 @@ const FAQ = [
   },
   {
     q: "Do I need to download an app?",
-    a: "No. GiftLedger works in your phone's browser. You can add it to your home screen so it opens like an app.",
+    a: "No. GiftyJifty works in your phone's browser. You can add it to your home screen so it opens like an app.",
   },
   {
     q: "My parents aren't great with apps. Will they manage?",
@@ -103,7 +103,7 @@ const FAQ = [
   },
   {
     q: "Can I add a gift from a store's website?",
-    a: "Yes. Paste the link from Amazon, Target or any store, and GiftLedger fills in the name and store for you. You just add the price.",
+    a: "Yes. Paste the link from Amazon, Target or any store, and GiftyJifty fills in the name and store for you. You just add the price.",
   },
   {
     q: "What happens to my lists after January 31?",
@@ -121,7 +121,7 @@ export default function Home() {
       <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold text-primary">
-            <Gift aria-hidden className="size-5" /> GiftLedger
+            <Gift aria-hidden className="size-5" /> GiftyJifty
           </Link>
           <div className="flex items-center gap-1">
             <Button asChild variant="ghost" size="sm">
@@ -156,7 +156,7 @@ export default function Home() {
           <div className="mx-auto w-full max-w-xs">
             <Image
               src="/screenshots/dashboard.webp"
-              alt="GiftLedger on a phone: holiday budget, spent and left, and a budget bar for each person"
+              alt="GiftyJifty on a phone: holiday budget, spent and left, and a budget bar for each person"
               width={750}
               height={1300}
               priority
@@ -179,7 +179,7 @@ export default function Home() {
                 </li>
               ))}
             </ul>
-            <p className="text-lg">GiftLedger keeps all of it in one place, on your phone, in a few taps.</p>
+            <p className="text-lg">GiftyJifty keeps all of it in one place, on your phone, in a few taps.</p>
             <p className="text-muted-foreground">
               Already started shopping? It&apos;s not too late: add what you&apos;ve bought in a minute and see exactly where you stand.
             </p>
@@ -188,7 +188,7 @@ export default function Home() {
 
         <section aria-labelledby="benefits" className="mx-auto w-full max-w-5xl space-y-14 px-4 py-14">
           <h2 id="benefits" className="sr-only">
-            What GiftLedger does
+            What GiftyJifty does
           </h2>
           {BENEFITS.map((b, i) => (
             <div key={b.title} className="grid items-center gap-8 md:grid-cols-2">
@@ -216,7 +216,7 @@ export default function Home() {
                     <span className="sr-only">Feature</span>
                   </th>
                   <th scope="col" className="p-3 text-center font-semibold text-primary">
-                    GiftLedger
+                    GiftyJifty
                   </th>
                   <th scope="col" className="p-3 text-center font-medium">
                     Spreadsheet

@@ -9,13 +9,13 @@ const figtree = Figtree({ variable: "--font-figtree", subsets: ["latin"], displa
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: { default: "GiftLedger: holiday gift planner and budget tracker", template: "%s · GiftLedger" },
+  title: { default: "GiftyJifty: holiday gift planner and budget tracker", template: "%s · GiftyJifty" },
   description:
     "Plan holiday gifts without overspending: a budget for every person, gift ideas, a shared family list so nobody buys the same thing, and return reminders.",
-  applicationName: "GiftLedger",
-  appleWebApp: { capable: true, title: "GiftLedger", statusBarStyle: "default" },
+  applicationName: "GiftyJifty",
+  appleWebApp: { capable: true, title: "GiftyJifty", statusBarStyle: "default" },
   formatDetection: { telephone: false },
-  openGraph: { type: "website", siteName: "GiftLedger", locale: "en_US" },
+  openGraph: { type: "website", siteName: "GiftyJifty", locale: "en_US" },
   twitter: { card: "summary_large_image" },
 };
 

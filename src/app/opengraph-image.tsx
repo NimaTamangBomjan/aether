@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
-// The preview card shown when someone shares a GiftLedger link.
-export const alt = "GiftLedger: stop overspending on holiday gifts";
+// The preview card shown when someone shares a GiftyJifty link.
+export const alt = "GiftyJifty: stop overspending on holiday gifts";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -27,7 +27,7 @@ export default function OpengraphImage() {
               <div style={{ width: 8, height: 32, background: "#b4472f" }} />
             </div>
           </div>
-          GiftLedger
+          GiftyJifty
         </div>
         <div style={{ fontSize: 76, fontWeight: 700, marginTop: 40, lineHeight: 1.1 }}>Stop overspending on holiday gifts.</div>
         <div style={{ fontSize: 34, marginTop: 28, color: "#6b625b" }}>

@@ -76,7 +76,7 @@ test("everything is saved, and a copy is one tap away on every page", async ({ p
   await expect(page.getByRole("link", { name: "Download a copy" })).toHaveAttribute("href", "/api/export");
 });
 
-test("iPhone visitors see how to add GiftLedger to the home screen, once", async ({ browser }) => {
+test("iPhone visitors see how to add GiftyJifty to the home screen, once", async ({ browser }) => {
   const context = await newBrowserContext(browser, {
     userAgent:
       "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1",

@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
 
-// Lets people add GiftLedger to their home screen; it opens full-screen like an app.
+// Lets people add GiftyJifty to their home screen; it opens full-screen like an app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "GiftLedger: holiday gift planner",
-    short_name: "GiftLedger",
+    name: "GiftyJifty: holiday gift planner",
+    short_name: "GiftyJifty",
     description: "Budgets, gift ideas, a shared family list and return reminders.",
     start_url: "/app",
     scope: "/",

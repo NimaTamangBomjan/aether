@@ -19,7 +19,7 @@ export async function GET() {
   return new NextResponse(csv, {
     headers: {
       "content-type": "text/csv; charset=utf-8",
-      "content-disposition": `attachment; filename="giftledger-export-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "content-disposition": `attachment; filename="giftyjifty-export-${new Date().toISOString().slice(0, 10)}.csv"`,
       "cache-control": "private, no-store",
     },
   });

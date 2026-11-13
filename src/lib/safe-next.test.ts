@@ -25,7 +25,7 @@ describe("safeNextPath", () => {
 });
 
 describe("nextFromConfirmParams", () => {
-  const app = "https://giftledger.app";
+  const app = "https://giftyjifty.com";
   it("reads next directly", () => {
     expect(nextFromConfirmParams(new URLSearchParams("next=/join/t"), app)).toBe("/join/t");
   });

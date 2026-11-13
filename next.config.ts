@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          // Nobody can show GiftLedger inside their own page (clickjacking).
+          // Nobody can show GiftyJifty inside their own page (clickjacking).
           { key: "Content-Security-Policy", value: "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "X-Content-Type-Options", value: "nosniff" },

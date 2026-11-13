@@ -15,7 +15,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-4 py-10">
       <Link href="/" className="mb-8 text-lg font-bold text-primary">
-        GiftLedger
+        GiftyJifty
       </Link>
       <h1 className="mb-2 text-2xl font-bold">Sign in or create your account</h1>
       <p className="mb-6 text-muted-foreground">No password needed.</p>

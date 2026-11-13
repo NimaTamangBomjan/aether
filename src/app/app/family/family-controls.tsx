@@ -37,7 +37,7 @@ export function InviteCreator() {
                   navigator
                     .share({
                       title: "Join our family gift list",
-                      text: "Join our family gift list on GiftLedger, so we don't buy the same gifts twice:",
+                      text: "Join our family gift list on GiftyJifty, so we don't buy the same gifts twice:",
                       url,
                     })
                     .catch(() => {})

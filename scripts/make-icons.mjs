@@ -1,4 +1,4 @@
-// Draws the GiftLedger app icon (a gift box) and writes the PNG sizes the PWA and phones need.
+// Draws the GiftyJifty app icon (a gift box) and writes the PNG sizes the PWA and phones need.
 // Run: node scripts/make-icons.mjs
 import sharp from "sharp";
 import { mkdirSync, writeFileSync } from "node:fs";

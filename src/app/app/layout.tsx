@@ -12,7 +12,7 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
     <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <Link href="/app" className="text-lg font-bold text-primary">
-          GiftLedger
+          GiftyJifty
         </Link>
         <nav aria-label="Main" className="flex items-center gap-1">
           {ctx.lists.length > 1 && <ListSwitcher lists={ctx.lists} activeId={ctx.list.id} />}

@@ -4,7 +4,7 @@ import { Share, X } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
 
-// Helps people keep GiftLedger one tap away. iPhones never offer to install a web app, so we show
+// Helps people keep GiftyJifty one tap away. iPhones never offer to install a web app, so we show
 // how; Android phones get a button that opens the phone's own "Install" prompt.
 
 const DISMISSED_KEY = "gl_home_tip_dismissed";
@@ -58,7 +58,7 @@ export function HomeScreenTip() {
 
   return (
     <aside aria-label="Add to home screen" className="relative rounded-xl border bg-secondary/50 p-4 pr-12">
-      <p className="font-semibold">Keep GiftLedger one tap away</p>
+      <p className="font-semibold">Keep GiftyJifty one tap away</p>
       {installPrompt ? (
         <Button
           size="sm"

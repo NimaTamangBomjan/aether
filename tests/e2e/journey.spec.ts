@@ -89,9 +89,9 @@ test("the whole journey works end to end", async ({ page, browser, baseURL }) =>
   expect(cron.status).toBe(200);
   await expect
     .poll(async () => (await sentTo(email)).map((e) => e.subject))
-    .toEqual(expect.arrayContaining([`GiftLedger: return by ${formatDate(addDays(today, 3), today)} ${firstIdea}`]));
+    .toEqual(expect.arrayContaining([`GiftyJifty: return by ${formatDate(addDays(today, 3), today)} ${firstIdea}`]));
   const subjects = (await sentTo(email)).map((e) => e.subject);
-  expect(subjects).toEqual(expect.arrayContaining(["Welcome to GiftLedger", "GiftLedger: your Season Pass is active"]));
+  expect(subjects).toEqual(expect.arrayContaining(["Welcome to GiftyJifty", "GiftyJifty: your Season Pass is active"]));
 
   // The family member sees the purchase, so nobody buys it twice.
   await alex.goto(personUrl);

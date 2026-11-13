@@ -21,7 +21,7 @@ export default async function UnsubscribePage({ searchParams }: PageProps<"/unsu
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-5 px-4 py-10">
       <Link href="/" className="text-lg font-bold text-primary">
-        GiftLedger
+        GiftyJifty
       </Link>
       {done ? (
         <>

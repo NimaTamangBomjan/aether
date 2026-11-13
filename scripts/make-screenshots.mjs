@@ -52,7 +52,7 @@ async function addGift(page, title, price, bought) {
   }
 }
 
-const browser = await chromium.launch();
+const browser = await chromium.launch(process.env.PLAYWRIGHT_CHROMIUM_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH } : {});
 const phone = { viewport: { width: 375, height: 650 }, deviceScaleFactor: 2, timezoneId: "America/New_York", colorScheme: "light" };
 const owner = await (await browser.newContext(phone)).newPage();
 const stamp = Date.now().toString(36);

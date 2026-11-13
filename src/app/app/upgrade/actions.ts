@@ -13,7 +13,7 @@ export async function startCheckout(): Promise<{ error: string } | void> {
   const ctx = await getListContext();
   const { data: profile } = await ctx.supabase.from("profiles").select("paid_until").eq("id", ctx.userId).single();
   if (hasActivePass(profile?.paid_until)) redirect("/app/upgrade");
-  if (seasonOver()) return { error: "The 2026 season has ended. Thanks for using GiftLedger!" };
+  if (seasonOver()) return { error: "The 2026 season has ended. Thanks for using GiftyJifty!" };
 
   const stripe = getStripe();
   const priceId = serverEnv().STRIPE_PRICE_ID;

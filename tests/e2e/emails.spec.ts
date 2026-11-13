@@ -45,7 +45,7 @@ async function runCron(baseURL: string, secret = CRON) {
 
 test("welcome and Season Pass thank-you emails", async ({ page, baseURL }) => {
   const email = await newUserOnDashboard(page, "welcome");
-  const welcome = await waitForEmail(email, /^Welcome to GiftLedger$/);
+  const welcome = await waitForEmail(email, /^Welcome to GiftyJifty$/);
   expect(welcome.text).toContain("/app");
 
   await grantPass(baseURL!, email);
@@ -72,7 +72,7 @@ test("the daily job emails a bundled return reminder once, with a working unsubs
   expect((await fetch(`${baseURL}/api/cron/reminders`)).status).toBe(401);
 
   expect((await runCron(baseURL!)).status).toBe(200);
-  const reminder = await waitForEmail(email, /^GiftLedger: return by .* Fleece vest$/);
+  const reminder = await waitForEmail(email, /^GiftyJifty: return by .* Fleece vest$/);
   expect(reminder.text).toContain("Fleece vest for Grandpa");
   // Email apps show their own "Unsubscribe" button, which posts to this address (one-click, RFC 8058).
   expect(reminder.headers["List-Unsubscribe"]).toMatch(/^<http:\/\/localhost:\d+\/api\/unsubscribe\?u=[^>]+>$/);
@@ -127,7 +127,7 @@ test("the owner can email an invite link, but not spam people with it", async ({
   const first = invitee();
   await send(first);
   await expect(page.getByText(`Invite sent to ${first}.`)).toBeVisible();
-  const mail = await waitForEmail(first, /^You're invited to a family gift list on GiftLedger$/);
+  const mail = await waitForEmail(first, /^You're invited to a family gift list on GiftyJifty$/);
   expect(mail.text).toMatch(/\/join\/[A-Za-z0-9_-]{43}/);
   expect(mail.text).toContain("Maria invited you to their family gift list");
   expect(mail.text).not.toContain("Holidays 2026");

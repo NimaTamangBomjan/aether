@@ -1,4 +1,4 @@
-# GiftLedger: project brief for Claude Code
+# GiftyJifty (formerly "GiftLedger"): project brief for Claude Code
 
 Read this file at the start of every session. It is the source of truth for this project. If something I say in chat conflicts with this file, ask me which one wins, then update this file.
 
@@ -257,7 +257,7 @@ Document each one in `.env.example` with where to find it:
 2. Development and tests use a local Supabase in Docker (`npm run db:start`, images from Docker Hub). The container's network blocks Stripe, Supabase cloud, Resend, PostHog and Sentry until the owner allows those domains.
 3. In the cloud environment the Anthropic key is stored as `APP_ANTHROPIC_API_KEY` (so Claude Code never uses it); `npm run env:local` maps it to `ANTHROPIC_API_KEY`. Vercel uses the normal name.
 4. Work happens on the assigned `claude/...` branch; each finished, checked stage is also pushed to `main`.
-5. The name and domain are not final yet ("GiftLedger" is the working name).
+5. **Name: GiftyJifty**, domain **giftyjifty.com** (owner decided Nov 12–13). Earlier notes say "GiftLedger" (the old working name). Internal identifiers keep `giftledger` on purpose (Stripe metadata tag, cookie names, test emails).
 
 **Costs (owner decides and pays later):** Vercel Pro ($20/mo, required for commercial use), Supabase Pro ($25/mo, for restorable daily backups), Resend Pro ($20/mo, the free plan's 100 emails/day is too low for launch). Supabase must send sign-in emails through Resend SMTP (the built-in sender is for testing only). Sales tax / Stripe Tax: owner to decide with an accountant.
 

@@ -19,11 +19,11 @@ export default async function JoinPage({ params }: PageProps<"/join/[token]">) {
   } else if (!userId) {
     content = (
       <>
-        <p className="text-lg">You&apos;ve been invited to a family gift list on GiftLedger, so nobody buys the same gift twice.</p>
+        <p className="text-lg">You&apos;ve been invited to a family gift list on GiftyJifty, so nobody buys the same gift twice.</p>
         <Button asChild size="lg" className="w-full">
           <Link href={`/sign-in?next=${encodeURIComponent(`/join/${token}`)}`}>Sign in to join</Link>
         </Button>
-        <p className="text-sm text-muted-foreground">New to GiftLedger? Signing in also creates your free account.</p>
+        <p className="text-sm text-muted-foreground">New to GiftyJifty? Signing in also creates your free account.</p>
       </>
     );
   } else {
@@ -63,7 +63,7 @@ export default async function JoinPage({ params }: PageProps<"/join/[token]">) {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center gap-5 px-4 py-10">
       <Link href="/" className="text-lg font-bold text-primary">
-        GiftLedger
+        GiftyJifty
       </Link>
       <h1 className="text-2xl font-bold">Join a family list</h1>
       {content}

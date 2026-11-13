@@ -6,7 +6,7 @@ export function LegalPage({ title, children }: { title: string; children: ReactN
   return (
     <main className="mx-auto w-full max-w-2xl px-4 py-10">
       <Link href="/" className="mb-6 inline-block text-lg font-bold text-primary">
-        GiftLedger
+        GiftyJifty
       </Link>
       <h1 className="mb-2 text-3xl font-bold">{title}</h1>
       <p className="mb-8 text-sm text-muted-foreground">Last updated {LEGAL_LAST_UPDATED}</p>

@@ -1,10 +1,10 @@
-# GiftLedger progress log
+# GiftyJifty progress log (formerly GiftLedger)
 
 Read this with `CLAUDE.md` at the start of every session. Newest stage first.
 
 ## Where we are
 - **Current stage:** 10 ✅ built and tested. All 10 stages are done; what's left needs the owner (keys, accounts, domain, headline, legal review, purchases). See "Needs from the owner" and the launch checklist below.
-- **Launch:** owner's target **Tue Nov 24** (before Black Friday, Nov 27). Domain bought: **giftyjifty.com** (Nov 12; not yet connected to Vercel or Resend). The app still says "GiftLedger": renaming to match the domain is the owner's call.
+- **Launch:** owner's target **Tue Nov 24** (before Black Friday, Nov 27). Domain bought: **giftyjifty.com** (Nov 12; not yet connected to Vercel or Resend). **Renamed to GiftyJifty (Nov 13)** everywhere people see it (app, emails, legal pages, manifest, OG image, landing screenshots). Internal ids keep `giftledger`. Owner must re-paste the 4 Supabase email templates (they now say GiftyJifty) when switching the sender to the domain.
 - **Audit (Nov 12):** typecheck, lint, build pass; 183 unit + database tests and 120 browser tests pass (4 skipped: live Stripe). New advisories fixed with `npm audit fix` (zod 4.6.7, dompurify 3.4.17 via posthog-js, @sentry/nextjs 11.12.0): `npm audit --omit=dev` = 0. The container's Chromium is newer than Playwright 1.56.1, so run e2e with `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium`.
 - **Go-live order (agreed Nov 9):** 1) fix Stripe test checkout ("Couldn't open checkout"; check Stripe → Developers → Logs) → 2) buy domain, verify it in Resend, switch Supabase SMTP sender → 3) app emails: `RESEND_API_KEY`, `EMAIL_FROM`, `CRON_SECRET`, `UNSUBSCRIBE_SECRET` in Vercel → 4) Anthropic key → 5) Turnstile, PostHog, Sentry + headline, legal review, support email → 6) Stripe live mode, one real purchase and refund → launch.
 - **Live now:** https://giftledger-iota.vercel.app (Supabase + Vercel). Supabase SMTP uses Resend's test sender (`onboarding@resend.dev`), which only emails the owner's address; custom templates are pasted.

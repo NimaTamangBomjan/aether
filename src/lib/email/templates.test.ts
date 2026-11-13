@@ -13,7 +13,7 @@ describe("emails", () => {
 
   it("invites carry no text a stranger chose, apart from a plain first name", () => {
     const phishing = inviteEmail({ inviterName: "PayPal: verify at evil.example", inviteUrl: "https://g.app/join/abc" });
-    expect(phishing.subject).toBe("You're invited to a family gift list on GiftLedger");
+    expect(phishing.subject).toBe("You're invited to a family gift list on GiftyJifty");
     expect(phishing.html + phishing.text).not.toMatch(/PayPal|evil/);
     expect(phishing.text).toContain("A family member invited you");
     const real = inviteEmail({ inviterName: "Mary-Jane O'Neil", inviteUrl: "https://g.app/join/abc" });
@@ -26,8 +26,8 @@ describe("emails", () => {
   });
 
   it("subjects are always one line", () => {
-    expect(oneLine("GiftLedger: last day to return Scarf\r\nBcc: victim@evil.test\u2028x")).toBe(
-      "GiftLedger: last day to return Scarf Bcc: victim@evil.test x",
+    expect(oneLine("GiftyJifty: last day to return Scarf\r\nBcc: victim@evil.test\u2028x")).toBe(
+      "GiftyJifty: last day to return Scarf Bcc: victim@evil.test x",
     );
   });
 
@@ -37,7 +37,7 @@ describe("emails", () => {
       inviteEmail({ inviterName: "Maria", inviteUrl: "https://g.app/join/x" }),
       passReceiptEmail({ name: "Maria", amountCents: 999, appUrl: "https://g.app" }),
     ]) {
-      expect(mail.subject).toContain("GiftLedger");
+      expect(mail.subject).toContain("GiftyJifty");
       expect(mail.text.length).toBeGreaterThan(20);
     }
   });
@@ -59,12 +59,12 @@ describe("emails", () => {
         { giftTitle: "Lego set", recipientName: "Mateo", store: null, returnBy: "2026-12-23", daysLeft: 3 },
       ],
     });
-    expect(mail.subject).toBe("GiftLedger: 2 gifts to return soon");
+    expect(mail.subject).toBe("GiftyJifty: 2 gifts to return soon");
     expect(mail.text).toContain("Last day to return:\n- Scarf for Grandma (Target): return by Dec 20");
     expect(mail.text).toContain("Return window closes in 3 days:\n- Lego set for Mateo: return by Dec 23");
     expect(mail.html).toContain("Unsubscribe from reminders");
     const single = reminderEmail({ ...{ name: "", today: "2026-12-20", appUrl: "x", unsubscribeUrl: "y" }, items: [{ giftTitle: "Scarf", recipientName: "G", store: null, returnBy: "2026-12-20", daysLeft: 0 }] });
-    expect(single.subject).toBe("GiftLedger: last day to return Scarf");
+    expect(single.subject).toBe("GiftyJifty: last day to return Scarf");
   });
 });
 

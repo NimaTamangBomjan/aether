@@ -32,7 +32,7 @@ test("privacy policy and terms are linked from the footer and sign-in", async ({
 
 test("installable app and search engine files", async ({ request }) => {
   const manifest = await (await request.get("/manifest.webmanifest")).json();
-  expect(manifest).toMatchObject({ short_name: "GiftLedger", display: "standalone", start_url: "/app" });
+  expect(manifest).toMatchObject({ short_name: "GiftyJifty", display: "standalone", start_url: "/app" });
   for (const icon of manifest.icons) expect((await request.get(icon.src)).status()).toBe(200);
   expect((await request.get("/apple-icon.png")).status()).toBe(200);
 

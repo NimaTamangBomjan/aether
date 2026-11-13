@@ -9,7 +9,7 @@ describe("error reports", () => {
     const event = {
       type: undefined,
       request: {
-        url: `https://giftledger.app/join/${TOKEN}?next=/app&email=m@x.com`,
+        url: `https://giftyjifty.com/join/${TOKEN}?next=/app&email=m@x.com`,
         cookies: { "sb-access-token": "secret" },
         headers: { authorization: "Bearer secret", cookie: "a=b" },
         data: { email: "maria@example.com" },
@@ -26,7 +26,7 @@ describe("error reports", () => {
       ],
     } as unknown as ErrorEvent;
     const out = scrubSentryEvent(event);
-    expect(out.request).toEqual({ url: "https://giftledger.app/join/[token]" });
+    expect(out.request).toEqual({ url: "https://giftyjifty.com/join/[token]" });
     expect(out.user).toEqual({ id: "6f1c2a7e-3b4d-4c5e-8f9a-0b1c2d3e4f5a" });
     expect(out.contexts?.nextjs?.request_path).toBe("/join/[token]");
     expect(out.breadcrumbs).toHaveLength(2);

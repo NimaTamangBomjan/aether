@@ -1,4 +1,4 @@
-# GiftLedger launch week (Nov 10–16, 2026)
+# GiftyJifty launch week (Nov 10–16, 2026)
 
 **Goal for the season:** 1,000 sign-ups and 100 Season Passes. Most buying happens between Nov 10 and Dec 24, with a big spike around Black Friday (Nov 27). So launch week is about getting the first real users, collecting their words, and fixing what confuses them before Black Friday.
 
@@ -30,7 +30,7 @@
 
 Film on your phone, 15–30 seconds, with on-screen captions (many people watch on mute).
 
-1. **"The scarf incident."** Hook: "My mom and I both bought Grandma the same scarf. Twice." Show marking a gift bought, then the other phone showing it right away. End card: "GiftLedger. Free to start."
+1. **"The scarf incident."** Hook: "My mom and I both bought Grandma the same scarf. Twice." Show marking a gift bought, then the other phone showing it right away. End card: "GiftyJifty. Free to start."
 2. **"Where did $1,200 go?"** Hook: "January me found out what December me spent." Show the dashboard filling up: green, amber, red. "One budget for every person."
 3. **"Stuck on Dad again."** Type Dad's interests and tap Get gift ideas; show 5 ideas inside the budget. "Ideas that fit the budget, not random lists."
 4. **"I missed the return window."** Show a gift with a return-by date and the reminder email. "It reminds you 3 days before."
@@ -45,13 +45,13 @@ Suggested hashtags: #holidaygifts #giftideas #christmasbudget #momlife #budgetin
 ## Posts you can copy
 
 **Facebook / personal**
-> I built a little app for something that drives me nuts every year: going over budget on gifts and accidentally buying the same thing as my partner. It's called GiftLedger. You give everyone a budget, get ideas when you're stuck, and share one list with family so nobody doubles up. It also reminds you before return windows close. Free for up to 5 people. If you try it, I'd love to hear what's confusing! [link]
+> I built a little app for something that drives me nuts every year: going over budget on gifts and accidentally buying the same thing as my partner. It's called GiftyJifty. You give everyone a budget, get ideas when you're stuck, and share one list with family so nobody doubles up. It also reminds you before return windows close. Free for up to 5 people. If you try it, I'd love to hear what's confusing! [link]
 
 **Parenting group (only where allowed)**
 > Mods, please remove if this isn't OK! I made a free tool for holiday gift planning after one too many "wait, you bought that too?" moments. Budget per person, gift ideas, and a shared family list so grandparents can see what's already covered. No app download. I'd honestly love feedback from parents buying for 15+ people. [link]
 
 **Reddit (only in threads or subreddits that allow it)**
-> How I keep holiday gift spending under control (with a free tool I made): Each year I list everyone, give each a budget, and track Idea → Bought → Wrapped → Given. The two things that saved me the most money were seeing the running total and sharing the list with my partner, so we stop double-buying. I turned it into a free web app (GiftLedger) [link], but the method works on paper too. Happy to answer questions.
+> How I keep holiday gift spending under control (with a free tool I made): Each year I list everyone, give each a budget, and track Idea → Bought → Wrapped → Given. The two things that saved me the most money were seeing the running total and sharing the list with my partner, so we stop double-buying. I turned it into a free web app (GiftyJifty) [link], but the method works on paper too. Happy to answer questions.
 
 ---
 
@@ -60,7 +60,7 @@ Suggested hashtags: #holidaygifts #giftideas #christmasbudget #momlife #budgetin
 Check the current rules before posting. Many communities allow self-promotion only in weekly threads.
 
 - **Facebook:** your own profile, local parents' groups and school PTA groups (ask an admin first), budgeting groups that allow tools.
-- **Instagram and TikTok:** your GiftLedger accounts, plus Stories from friends who tried it.
+- **Instagram and TikTok:** your GiftyJifty accounts, plus Stories from friends who tried it.
 - **Reddit:** look for weekly self-promotion or "tools" threads in budgeting, personal-finance, frugal-living and parenting communities. Answering someone's actual question helpfully is better than a standalone ad. Never post the same text in many places at once.
 - **Product Hunt** (optional, a Tuesday or Wednesday): good for a burst of early, tech-savvy feedback.
 - **Word of mouth:** each family member who joins a shared list sees the app. A friendly "invite your family" nudge after someone's 3rd person is worth testing in December.

@@ -57,7 +57,7 @@ export default async function UpgradePage({ searchParams }: PageProps<"/app/upgr
           <Benefits />
         </>
       ) : seasonOver() ? (
-        <p className="rounded-xl border p-4">The 2026 season has ended. Thanks for using GiftLedger!</p>
+        <p className="rounded-xl border p-4">The 2026 season has ended. Thanks for using GiftyJifty!</p>
       ) : (
         <div className="space-y-5 rounded-2xl border border-primary/30 bg-gradient-to-br from-secondary to-accent/50 p-5 shadow-sm">
           <div className="flex items-center gap-3">
